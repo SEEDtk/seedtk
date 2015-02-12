@@ -24,7 +24,28 @@ for my $mod (@modules)
     }
 }
 
-print "Bootstrap\n";
-system("./bootstrap");
+chdir("..");
+print "Bootstrapping SEEDtk\n";
+my $rc = system("./bootstrap");
+if ($rc != 0)
+{
+    die "Bootstrap run failed with rc=$rc\n";
+}
 
+print "Performing initial build\n";
+system("bash", "-c", "source user-env.sh; make");
 
+print "Complete. \n";
+print "\nRun the following command to set up your environment:\n\n";
+if ($ENV{SHELL} =~ /csh/)
+{
+    print "source user-env.csh\n";
+}
+else
+{
+    print "source user-env.sh\n";
+}
+
+print "\nTo perform the default directory setup run the following commands\n\n";
+print "mkdir Data $ENV{HOME}/public_html/SEEDtk\n";
+print "Config --dirs --dna /homes/parrello/DnaRepo Data $ENV{HOME}/public_html/SEEDtk\n";
