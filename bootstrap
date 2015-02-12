@@ -13,6 +13,8 @@
 # returns an unacceptable form of the path.
 #
 
+require_java=0
+
 fail () {
     echo $1 1>&2
     exit 1
@@ -49,6 +51,18 @@ EOF
 }
 
 if [ $# -lt 1 ] ; then
+    
+    #
+    # Check for common default runtimes.
+    #
+    for r in /vol/kbase/runtime /kb/runtime /Applications/RASTtk.app/runtime ; do
+	if [ -d $r ] ; then
+	    rt_dir=$r
+	    echo "Setting runtime to $rt_dir"
+	    break
+	fi
+    done
+
     if [ ! -L runtime ] ; then
 	fail "Usage: $0 runtime-dir [top-dir]"
     fi
@@ -78,14 +92,6 @@ if [ -d $top_dir/runtime ] ; then
 	fail "Runtime already configured; remove $top_dir/runtime if you wish to re-bootstrap."
     fi
 fi
-
-#if [ ! -x $rt_dir/java/bin/javac ] ; then
-#    fail "Runtime directory $rt_dir does not contain an executable javac"
-#fi
-
-#if [ ! -x $rt_dir/glassfish3/bin/asadmin ] ; then
-#    fail "Runtime directory $rt_dir does not contain an executable asadmin"
-#fi
 
 #
 # Check for the existence of our dependencies.
@@ -145,45 +151,48 @@ done
 # If we come in with a JAVA_HOME set, use that. 
 #
 
-java_path=''
-if [ "$JAVA_HOME" = "" ] ; then
-    if [ -d "$rt_dir/java" ] ; then
-	elt="\$KB_RUNTIME/java"
-	java_path=$elt
-    elif [ -x /usr/libexec/java_home ] ; then
-	java_path=`/usr/libexec/java_home`
-    elif [ -d "/Library/Java/Home" ] ; then
+if [ "$require_java" != 0 ] ; then
+
+    java_path=''
+    if [ "$JAVA_HOME" = "" ] ; then
+	if [ -d "$rt_dir/java" ] ; then
+	    elt="\$KB_RUNTIME/java"
+	    java_path=$elt
+	elif [ -x /usr/libexec/java_home ] ; then
+	    java_path=`/usr/libexec/java_home`
+	elif [ -d "/Library/Java/Home" ] ; then
 	# Mac
-	java_path="/Library/Java/Home"
-    else 
-	echo "JAVA_HOME not found" 1>&2
-	exit 1
+	    java_path="/Library/Java/Home"
+	else 
+	    echo "JAVA_HOME not found" 1>&2
+	    exit 1
 	#
 	# Try to find javac, and set based on that.
 	#
-    fi
-else
+	fi
+    else
 	java_path="$JAVA_HOME"
-fi
-
-#
-# Configure the appropriate CATALINA_HOME.
-#
-# If we come in with a CATALINA_HOME set, use that. 
-#
-tomcat_path=''
-if [ "$CATALINA_HOME" = "" ] ; then
-    if [ -d "$rt_dir/tomcat" ] ; then
-	elt="\$KB_RUNTIME/tomcat"
-	tomcat_path=$elt
-    elif [ -d "/Library/Tomcat/Home" ] ; then
-	# Mac
-	tomcat_path="/Library/Tomcat/Home"
-    else 
-	echo "CATALINA_HOME not found" 1>&2
     fi
-else
+
+    #
+    # Configure the appropriate CATALINA_HOME.
+    #
+    # If we come in with a CATALINA_HOME set, use that. 
+    #
+    tomcat_path=''
+    if [ "$CATALINA_HOME" = "" ] ; then
+	if [ -d "$rt_dir/tomcat" ] ; then
+	    elt="\$KB_RUNTIME/tomcat"
+	    tomcat_path=$elt
+	elif [ -d "/Library/Tomcat/Home" ] ; then
+	# Mac
+	    tomcat_path="/Library/Tomcat/Home"
+	else 
+	    echo "CATALINA_HOME not found" 1>&2
+	fi
+    else
 	tomcat_path="$CATALINA_HOME"
+    fi
 fi
 
 modlist=""
@@ -278,7 +287,7 @@ export KB_R_PATH=$rscript_lib
 export JAVA_HOME=$java_path
 export CATALINA_HOME=$tomcat_path
 export PATH=$path_str
-export PERL5LIB=\$KB_PERL_PATH
+export PERL5LIB=\$PERL5LIB:\$KB_PERL_PATH
 export PYTHONPATH=\$KB_PYTHON_PATH:\$PYTHONPATH
 export R_LIBS=\$KB_R_PATH:\$R_LIBS
 export GLASSFISH_HOME=\$KB_RUNTIME/glassfish3

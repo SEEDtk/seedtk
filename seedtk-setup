@@ -1,0 +1,23 @@
+#!/usr/bin/env perl
+
+use strict;
+use File::Basename;
+
+my @modules = qw(utils ERDB kernel);
+
+my $rstr = `git remote -v`;
+my($remote) = $rstr =~ /^origin\s+(\S+)/;
+
+my $remote_base = basename($remote);
+print "Check out from $remote_base\n";
+
+chdir('modules') or die "Cannot chdir modules: $!";
+
+for my $mod (@modules)
+{
+    my $rc = system("git", "clone", "$remote_base/$mod.git");
+    if ($rc != 0)
+    {
+	die "Error cloning $remote_base/$mod.git\n";
+    }
+}
