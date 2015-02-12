@@ -8,16 +8,23 @@ my @modules = qw(utils ERDB kernel);
 my $rstr = `git remote -v`;
 my($remote) = $rstr =~ /^origin\s+(\S+)/;
 
-my $remote_base = basename($remote);
+my $remote_base = dirname($remote);
 print "Check out from $remote_base\n";
 
 chdir('modules') or die "Cannot chdir modules: $!";
 
 for my $mod (@modules)
 {
-    my $rc = system("git", "clone", "$remote_base/$mod.git");
+    my $url = "$remote_base/$mod.git";
+    print "Clone $url\n";
+    my $rc = system("git", "clone", $url);
     if ($rc != 0)
     {
-	die "Error cloning $remote_base/$mod.git\n";
+	die "Error cloning $url\n";
     }
 }
+
+print "Bootstrap\n";
+system("./bootstrap");
+
+

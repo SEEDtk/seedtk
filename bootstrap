@@ -63,10 +63,12 @@ if [ $# -lt 1 ] ; then
 	fi
     done
 
-    if [ ! -L runtime ] ; then
-	fail "Usage: $0 runtime-dir [top-dir]"
+    if [ "$rt_dir" = "" ] ; then
+	if [ -L runtime ] ; then
+	    fail "Usage: $0 runtime-dir [top-dir]"
+	fi
+	rt_dir=`readlink runtime`
     fi
-    rt_dir=`readlink runtime`
     top_dir=`pwd`
 else
     rt_dir=$1
@@ -197,7 +199,7 @@ fi
 
 modlist=""
 modlistc=""
-perl_lib=""
+perl_lib="\$KB_TOP/config"
 for moddir in modules/* ; do
     p=$top_dir/$moddir/lib
     if [ -d $p ] ; then
@@ -236,7 +238,7 @@ done
 # Construct python path
 #
 
-python_lib=""
+python_lib="\$KB_TOP/config"
 for moddir in modules/* ; do
     p=$top_dir/$moddir/lib
     if [ -d $p ] ; then
@@ -287,7 +289,11 @@ export KB_R_PATH=$rscript_lib
 export JAVA_HOME=$java_path
 export CATALINA_HOME=$tomcat_path
 export PATH=$path_str
-export PERL5LIB=\$PERL5LIB:\$KB_PERL_PATH
+if [ "$PERL5LIB" = "" ] ; then
+    export PERL5LIB=\$KB_PERL_PATH
+else
+    export PERL5LIB=\$PERL5LIB:\$KB_PERL_PATH
+fi
 export PYTHONPATH=\$KB_PYTHON_PATH:\$PYTHONPATH
 export R_LIBS=\$KB_R_PATH:\$R_LIBS
 export GLASSFISH_HOME=\$KB_RUNTIME/glassfish3
