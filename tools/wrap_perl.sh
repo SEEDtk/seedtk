@@ -22,7 +22,7 @@ export PATH=$KB_RUNTIME/bin:$KB_TOP/bin:\$PATH
 if [ "\$PERL5LIB" = "" ] ; then
     export PERL5LIB=$KB_PERL_PATH
 else
-    export PERL5LIB=\$PERL5LIB:$KB_PERL_PATH
+    export PERL5LIB=$KB_PERL_PATH:\$PERL5LIB
 fi
 
 EOF1

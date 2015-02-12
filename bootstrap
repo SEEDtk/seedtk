@@ -292,7 +292,7 @@ export PATH=$path_str
 if [ "$PERL5LIB" = "" ] ; then
     export PERL5LIB=\$KB_PERL_PATH
 else
-    export PERL5LIB=\$PERL5LIB:\$KB_PERL_PATH
+    export PERL5LIB=\$KB_PERL_PATH:\$PERL5LIB
 fi
 export PYTHONPATH=\$KB_PYTHON_PATH:\$PYTHONPATH
 export R_LIBS=\$KB_R_PATH:\$R_LIBS
