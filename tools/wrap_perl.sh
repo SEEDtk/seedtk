@@ -19,7 +19,12 @@ cat > $dst <<EOF1
 export KB_TOP=$KB_TOP
 export KB_RUNTIME=$KB_RUNTIME
 export PATH=$KB_RUNTIME/bin:$KB_TOP/bin:\$PATH
-export PERL5LIB=$KB_PERL_PATH
+if [ "\$PERL5LIB" = "" ] ; then
+    export PERL5LIB=$KB_PERL_PATH
+else
+    export PERL5LIB=\$PERL5LIB:$KB_PERL_PATH
+fi
+
 EOF1
 for var in $WRAP_VARIABLES ; do
 	val=${!var}
