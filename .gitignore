@@ -1,11 +1,3 @@
 .includepath
-config/FIG_Config.pm
-user_env.sh
-user_env.csh
-tools/wrap_perl
-tools/wrap_perl_app
-tools/wrap_python
-tools/wrap_python_app
-tools/wrap_rscript
-tools/wrap_sh
-tools/wrap_starman
+/user_env.csh
+/user-env.sh
