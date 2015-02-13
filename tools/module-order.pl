@@ -34,7 +34,7 @@ for my $mf (<$modules_dir/*/Makefile>)
     my $mod = basename($mdir);
 
     $graph->add_vertex($mod);
-    
+
     if (open(D, "<", "$mdir/DEPENDENCIES"))
     {
 	while (<D>)
@@ -67,7 +67,7 @@ for my $mod (@mods)
 {
     my %seen;
     $seen{$mod} = 1;
-    
+
 }
 
 my @sorted;

@@ -32,7 +32,7 @@ if (-e "$ENV{TARGET}/deployment.cfg" ) {
 	$global_cfg->save("$ENV{TARGET}/deployment.cfg.bak");
 }
 
-# if there is a module deploy.cfg available, read it 
+# if there is a module deploy.cfg available, read it
 if (-e './deploy.cfg') {
 	$local_cfg->read('./deploy.cfg')
 	  or die "can not read ./deploy.cfg", $local_cfg->error();
@@ -40,7 +40,7 @@ if (-e './deploy.cfg') {
 
 # merge the two configs, issueing a warning if the same key exists with
 # different values between the two config files
-foreach my $key (keys $local_cfg->vars() ) {
+foreach my $key (keys %{$local_cfg->vars()} ) {
 	if ($global_cfg->param($key) and
 	    $global_cfg->param($key) ne $local_cfg->param($key)) {
 		warn "key conflict: global $key, ", $global_cfg->param($key), "\n",
@@ -109,7 +109,7 @@ file will be created as a backup.
 
 =over
 
-=item   -h, --help  
+=item   -h, --help
 This documentation
 
 =item   -a
