@@ -294,10 +294,50 @@ of the tasks you need to do.
 =head1 Setting Up an Eclipse Environment
 
 In Eclipse, the directory structure is very different. Each module is in its own private directory,
-and must be imported as a separate project.
+and must be imported as a separate project. Under Windows, no makefile support is required and everything
+is executed directly in the Eclipse environment (or a command shell if you prefer).
+
+To begin, create a fresh workspace.
+
+Go into I<Window, Preferences, Team, Git, Configuration>, select the I<User Settings> tab, and specify
+your name and email. Your email should be the same as the one you use to log in to GITHUB.
+
+Now you need to create your projects. There are five of them to start off, and yes, you have to do 
+them one at a time.
+
+For each project you want to create:
+
+=over 4
+
+=item 1
+
+Use I<File, Import, Git, Projects from Git, Clone URI> to get to the B<Source Git Repository> dialog.
+Enter the URI C<http://github.com/SEEDtk/>I<project> where I<project> is the current project (either
+C<seedtk>, C<ERDB>, C<kernel>, C<utils>, or C<Web>). Enter your GITHUB username in the I<User> box of
+the I<Authentication> section, and your GITHUB password below it in the I<Password> box. If you check
+I<Store in Secure Store>, you'll never have to enter the user name or passwword again. Click I<Next>
+
+=item 2
+
+You should see a list of branches (sometimes only one). Choose C<master> and click
+I<Next> again.
+
+=item 3
+
+You should now be on the B<Local Destination> dialog. Select the directory where you want your code
+stored. In general, it will be outside the Eclipse workspace in a special directory allocated for GIT.
+Make sure, however, that all of the projects are stored under the same folder. That is, if C<seedtk>
+is going in the directory C</Users/Projects/GIT/seedtk>, the C<ERDB> project must be in
+C</Users/Projects/GIT/ERDB>, the C<kernel> project in C</Users/Projects/GIT/kernel>, and so forth.
+Click I<Next>.
+
+=item 4
+
+You should now be on the B<Select a wizard to use for importing projects> page. Select I<Import existing
+projects> and click I<Next>.
 
 =cut
 
-##TODO Document Eclipse setup procedure
+##TODO Adjust Eclipse setup procedure for the Mac
 
 1;
