@@ -4,7 +4,6 @@ This file contains Bruce's current to-do list.
 
 =cut
 
-    ## TODO Test the Eclipse documentation by setting up an environment on BlackWindow
     ## TODO Test the Unix documentation by setting up an environment on maple
     ## TODO Fix the DBD pointer in index.html to the new location on maple
     ## TODO Try to get the web system working in Unix

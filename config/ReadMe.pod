@@ -302,7 +302,7 @@ To begin, create a fresh workspace.
 Go into I<Window, Preferences, Team, Git, Configuration>, select the I<User Settings> tab, and specify
 your name and email. Your email should be the same as the one you use to log in to GITHUB.
 
-Now you need to create your projects. There are five of them to start off, and yes, you have to do 
+Now you need to create your projects. There are five of them to start off, and yes, you have to do
 them one at a time.
 
 For each project you want to create:
@@ -335,6 +335,99 @@ Click I<Next>.
 
 You should now be on the B<Select a wizard to use for importing projects> page. Select I<Import existing
 projects> and click I<Next>.
+
+=item 5
+
+GIT will have downloaded the repository and show you the name of the project. Leave the project folder
+checked and click I<Finish> to complete the import.
+
+=back
+
+Repeat this process for each of the five projects. Eclipse will immediately start flagging the projects
+with dozens of errors. This is okay, as we will fix most of them soon.
+
+When you get to the B<Source Git Repository> page, the second time, Eclipse will present a search
+drop-down as soon as you type C<h> in the I<URI> box. Double-click the most recent choice, then
+change the last segment of the repository path (the project name). Also note that as soon as you type
+the first letter of your password in the I<Password> box, your whole password will appear.
+
+Your project has numerous errors because the library paths are not properly specified. We will fix
+this now by running the L<Config.pl> script. First, however, we need to create a data directory.
+Go into your workspace directory and create a new folder called C<Data>.
+
+Use I<Run, Run Configurations> to get the B<Create, manage, and run configurations> dialog. Click
+I<Perl Local> to highlight it and click the B<New> tool to create a new launch configuration. You should
+be on the I<Main> tab. Type C<kernel> in the I<Project> box and C<scripts/Config.pl> in the
+I<File to execute> box. Change the configuration name to C<Initial Configuration> so you know this is
+the first-time Config call. If you've done something wrong, you'll get a little error message at the
+top of the dialog and the I<Run> button will dim.
+
+You need to specify arguments. Switch to the I<Arguments> tab, and type
+
+    --dirs --links --eclipse=seedtk ${workspace_loc}/Data ${project_loc:Web}
+
+If you have an Apache localhost installed, then you can configure the SEEDtk development web
+server by adding the command-line option
+
+    --apache=/xampp/apache/conf/extra/httpd-vhosts.conf
+
+to update the VHOSTS configuration file. You must use the actual location of your configuration
+file. The version above is the default location if you are using XAMPP. This is entirely optional.
+
+Now you can click the I<Run> button.  Eclipse will tell you there are errors in the project. Reassure
+him that this is not a problem by clicking I<Proceed>. A flurry of messages will appear in the console
+followed by C<All done>.
+
+No do I<Project, Clean> and specify that you want to I<Clean all projects>. The error markers will
+all disappear except for one or two indicating PERL modules you need to install. Once you've
+installed the missing packages, clean the offending projects and you should have a pristine,
+error-free environment.
+
+=head2 Setting up the Database
+
+The default database configuration is designed for development on a few select Unix servers
+at the lab. You can, however, set up a local MySQL database for your own use. Go into
+C<SEEDtk/config/FIG_Config.pm> and make the following modification.
+
+    our $dbhost = "localhost";
+
+You will need to use MySQL to create a blank database and provide access to it with a
+password-protected user.
+
+    CREATE DATABASE seedtk_shrub;
+    GRANT ALL ON seedtk_shrub.* TO 'seed'@'localhost' IDENTIFIED BY 'dna=fun';
+
+Assuming you use the examples above (and you shouldn't), you would then configure
+the database name and user information in L<FIG_Config> as follows
+
+    our $shrubDB = "seedtk_shrub";
+    our $userData = "seed_remote/Quintus";
+
+Note that in the C<$userData> variable the string is the user name, a slash, and
+then the password. B<If you are using your own database, do not leave the C<$shrubDB>
+blank even if you are using the same name as the live database, because the live
+database name periodically changes!>
+
+Once you have created your database, you should download some genomes and subsystems
+and use L<ShrubLoadSubsystems.pl> and L<ShrubLoadGenomes.pl> to load it.
+
+There is a special name and password combination for accessing the live database from
+a remote computer over VPN. Contact L<Bruce Parrello|mailto:bparrello@figresearch.com>
+for the relevant information.
+
+=head2 Using GIT in Eclipse
+
+Eclipse has built-in support for GIT. Since your projects were created from the GITHUB
+repository, they are permanently connected to the GITHUB repositories. Right-click on
+a project and select one of the I<Team> options.
+
+To commit a project, use I<Commit>. This commits your changes locally. To push them
+up to GITHUB, you can choose to push at the same time; (however, you will not want
+to do this all the time, just at major points when the code is stable).
+
+To get the latest source from GITHUB, you can select the I<Pull> option. You
+can select multiple projects at the same time when doing a pull, which makes it
+very convenient.
 
 =cut
 
