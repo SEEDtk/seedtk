@@ -1,0 +1,13 @@
+=head1 Task List for Bruce
+
+This file contains Bruce's current to-do list.
+
+=cut
+
+    ## TODO Test the Eclipse documentation by setting up an environment on BlackWindow
+    ## TODO Test the Unix documentation by setting up an environment on maple
+    ## TODO Fix the DBD pointer in index.html to the new location on maple
+    ## TODO Try to get the web system working in Unix
+    ## TODO Create a get-all script
+    ## TODO Create script to change the function of a feature
+    ## TODO Load Terry's new data into a database
