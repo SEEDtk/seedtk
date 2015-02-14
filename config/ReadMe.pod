@@ -164,6 +164,12 @@ repository. To insure that you are appropriately identtified, tell GIT your name
     git config user.name yourFullName
     git config user.email yourGitHubEmail
 
+If you are going to use the SSH protocol, tell GIT to cache your passphrase so you oinly have to type
+it every couple of houes.
+
+    git config --global credential.helper cache
+    git config --global credential.helper 'cache --timeout=7200'
+
 Position in your home directory with the B<bash> shell active.
 
 Clone the repository using GIT.
