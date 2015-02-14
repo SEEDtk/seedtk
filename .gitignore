@@ -1,3 +1,2 @@
 .includepath
-/user_env.csh
-/user-env.sh
+/user-env.*
