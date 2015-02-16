@@ -452,7 +452,22 @@ To get the latest source from GITHUB, you can select the I<Pull> option. You
 can select multiple projects at the same time when doing a pull, which makes it
 very convenient.
 
+=head1 Useful Links
+
+=over 4
+
+=item 1
+
+L<Current Shrub DBD|http://pubseed.theseed.org/ErdbDocWidget.cgi?xmlFileName=/home/parrello/SEEDtk/modules/ERDB/ShrubDBD.xml>
+
+=item 2
+
+L<Index of SEEDtk Scripts|scripts>
+
+=back
+
 =cut
+
 
 ##TODO Adjust Eclipse setup procedure for the Mac
 
