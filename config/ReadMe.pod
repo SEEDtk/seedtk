@@ -289,8 +289,11 @@ You typed the wrong password.
 
 =back
 
-There are numerous other features and capabilities in GIT; however, these will get you through almost all
-of the tasks you need to do.
+=head3 pull_all
+
+Since there are many projects in the SEEDtk system, it can be generally tedious to update
+the source. The L<pull_all.pl> script will do a C<git pull> from all of the module directories
+in succession.
 
 =head1 Setting Up an Eclipse Environment
 
@@ -373,7 +376,8 @@ server by adding the command-line option
     --apache=/xampp/apache/conf/extra/httpd-vhosts.conf
 
 to update the VHOSTS configuration file. You must use the actual location of your configuration
-file. The version above is the default location if you are using XAMPP. This is entirely optional.
+file. The version above is the default location if you are using XAMPP. This is entirely optional,
+and is for Windows only. For the Mac, we will process this later.
 
 Now you can click the I<Run> button.  Eclipse will tell you there are errors in the project. Reassure
 him that this is not a problem by clicking I<Proceed>. A flurry of messages will appear in the console
