@@ -375,16 +375,7 @@ top of the dialog and the I<Run> button will dim.
 
 You need to specify arguments. Switch to the I<Arguments> tab, and type
 
-    --dirs --links --eclipse=seedtk ${workspace_loc}/Data ${project_loc:Web}
-
-If you have an Apache localhost installed, then you can configure the SEEDtk development web
-server by adding the command-line option
-
-    --apache=/xampp/apache/conf/extra/httpd-vhosts.conf
-
-to update the VHOSTS configuration file. You must use the actual location of your configuration
-file. The version above is the default location if you are using XAMPP. This is entirely optional,
-and is for Windows only. For the Mac, we will process this later.
+    --dirs --links --eclipse=SEEDtk ${workspace_loc}/Data ${project_loc:Web}
 
 Now you can click the I<Run> button.  Eclipse will tell you there are errors in the project. Reassure
 him that this is not a problem by clicking I<Proceed>. A flurry of messages will appear in the console
@@ -407,9 +398,32 @@ changes in your environment. Generally, it is required when you make a change to
 there is a change to your PERL5LIB or PATH environment variables, or there is a global project
 change.
 
-After the first successful invocation, the only parameters you need are the command-line options
-C<eclipse> and (optionally) C<apache>. Create a new run configuration with just these arguments in
-it so you have one handy.
+After the first successful invocation, the only parameters you need are the command-line option
+C<eclipse>. Create a new run configuration with just this arguments in it so you have one handy.
+
+=head2 Preparing the Mac
+
+You can't install L<GD> using CPAN. Instead, you must install libgd. Use the commands below in
+a terminal window
+
+    curl -O http://wangqinhu.com/data/gd/gd.tar.gz
+    tar -zxf gd.tar.gz
+    cd gd
+    sudo ./install
+
+You'll need to clean up the install files if it works.
+
+    rm *
+    cd ..
+    rmdir gd
+    rm gd.tar.gz
+
+In order to install L<Config::Simple> you need to accept the xcode license. This requires sudoing
+to root (again in a terminal window) and typing
+
+    xcodebuild -license
+
+You will also need MySQL, which can be found L<here|http:dev.mysql.com/downloads/>.
 
 =head2 Setting up the Database
 
@@ -456,6 +470,63 @@ to do this all the time, just at major points when the code is stable).
 To get the latest source from GITHUB, you can select the I<Pull> option. You
 can select multiple projects at the same time when doing a pull, which makes it
 very convenient.
+
+=head2 Starting a Mac Command Shell
+
+To start a command shell on the Mac, simply navigate to the project directory
+(usually something ending in C<SEEDtk>). You can find the project directory
+by looking at the properties of the B<SEEDtk> project in Eclipse. It is also
+listed in your L<FIG_Config>. To establish the environment, use
+
+    source user-env.sh
+
+You can then type commands directly into the command prompt without invoking
+PERL or using a C<.pl> extension.
+
+=head2 Activating the Development Web Site
+
+In order to use the development web site, you need to modify your HOSTS file and
+set up the VHOSTS file. The HOSTS file is located at C</Windows/System32/Drivers/etc/hosts>
+on Windows and C</private/etc/hosts> on the Mac. In Windows you can edit it using
+a text editor in Administrator mode. On the Mac, you must copy it, edit the copy,
+and then copy it back as the root user.
+
+Simply add the line
+
+    127.0.0.1   fig.localhost
+
+to the file. (The IP address starts in column 1.) After updating your hosts file,
+you will need to restart the system.
+
+Now you need to run ApacheFix to update your Apache configuration. The single
+argument is the location of your VHosts file.  On a Mac, this is
+C</private/etc/apache2/extra/httpd-vhosts.conf>. On Windows, this will depend on which
+Apache installation you are using. For example, on a standard XAMPP installation,
+it would be C</xampp/apache/conf/other/httpd-vhosts.conf>. To run the script on
+a Mac, you will need root privileges.
+
+On a Mac, you need to do several other things as well.
+
+=over 4
+
+=item 1 
+
+Fix your main configuration file as well. This is
+C</private/etc/apache2/httpd.conf>. Specify this with the C<mac> option.
+
+=item 2 
+
+Blow away the bogus VHOSTS. Specify this with the C<clear> option.
+Don't do that if you have already set up legitimate VHOSTS.
+
+=item 3
+
+Mark the web directory folder as shared. This can be done with Finder.
+
+=back
+
+Once you've done all this, reboot the system to get the configuration changes
+stored and go to L<http://fig.localhost> in your browser.
 
 =head1 Useful Links
 
