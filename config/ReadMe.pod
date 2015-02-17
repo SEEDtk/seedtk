@@ -164,6 +164,12 @@ repository. To insure that you are appropriately identtified, tell GIT your name
     git config user.name yourFullName
     git config user.email yourGitHubEmail
 
+If you are going to use the SSH protocol, tell GIT to cache your passphrase so you oinly have to type
+it every couple of houes.
+
+    git config --global credential.helper cache
+    git config --global credential.helper 'cache --timeout=7200'
+
 Position in your home directory with the B<bash> shell active.
 
 Clone the repository using GIT.
@@ -303,7 +309,8 @@ is executed directly in the Eclipse environment (or a command shell if you prefe
 
 To begin, create a fresh workspace.
 
-Go into I<Window, Preferences, Team, Git, Configuration>, select the I<User Settings> tab, and specify
+In Windows, go into I<Window, Preferences, Team, Git, Configuration>. On the Mac, use
+I<Eclipse, Preferences, Team, Git, Configuration>. Select the I<User Settings> tab, and specify
 your name and email. Your email should be the same as the one you use to log in to GITHUB.
 
 Now you need to create your projects. There are five of them to start off, and yes, you have to do
@@ -316,7 +323,7 @@ For each project you want to create:
 =item 1
 
 Use I<File, Import, Git, Projects from Git, Clone URI> to get to the B<Source Git Repository> dialog.
-Enter the URI C<http://github.com/SEEDtk/>I<project> where I<project> is the current project (either
+Enter the URI C<https://github.com/SEEDtk/>I<project> where I<project> is the current project (either
 C<seedtk>, C<ERDB>, C<kernel>, C<utils>, or C<Web>). Enter your GITHUB username in the I<User> box of
 the I<Authentication> section, and your GITHUB password below it in the I<Password> box. If you check
 I<Store in Secure Store>, you'll never have to enter the user name or passwword again. Click I<Next>
@@ -450,7 +457,22 @@ To get the latest source from GITHUB, you can select the I<Pull> option. You
 can select multiple projects at the same time when doing a pull, which makes it
 very convenient.
 
+=head1 Useful Links
+
+=over 4
+
+=item 1
+
+L<Current Shrub DBD|http://pubseed.theseed.org/ErdbDocWidget.cgi?xmlFileName=/home/parrello/SEEDtk/modules/ERDB/ShrubDBD.xml>
+
+=item 2
+
+L<Index of SEEDtk Scripts|scripts>
+
+=back
+
 =cut
+
 
 ##TODO Adjust Eclipse setup procedure for the Mac
 
