@@ -65,6 +65,29 @@ system registry. If this is the case, you must reboot the system to access the
 new information. In an Eclipse configuration, you can direct L<Config.pl> to update
 your virtual hosts file. In this case, you must restart the local web server.
 
+=head2 The Source Modules
+
+The project is divided into multiple source modules. The core modules are as follows.
+
+=over 4
+
+=item ERDB
+
+This module contains the code for implementing the database layer and scripts for
+loading and maintaining the database.
+
+=item kernel
+
+This module contains code relating to bioinformatics and scripts for querying and
+updating the database.
+
+=item utils
+
+This module contains code that does not relate to bioinformatics or the database.
+It also contains prototype templates for PERL code.
+
+=back
+
 =head2 The Data Directory
 
 The default data directory structure includes two main folders.
