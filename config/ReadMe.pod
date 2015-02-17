@@ -295,11 +295,15 @@ You typed the wrong password.
 
 =back
 
-=head3 pull_all
+=head3 pull-all
 
 Since there are many projects in the SEEDtk system, it can be generally tedious to update
-the source. The L<pull_all.pl> script will do a C<git pull> from all of the module directories
-in succession.
+the source. In Unix environments, L<Config.pl> creates a shell script called C<pull-all.sh>
+that does a C<git pull> from all of the module directories in succession. This script must
+be sourced.
+
+    cd ~SEEDtk
+    source pull-all.sh
 
 =head1 Setting Up an Eclipse Environment
 
@@ -509,12 +513,12 @@ On a Mac, you need to do several other things as well.
 
 =over 4
 
-=item 1 
+=item 1
 
 Fix your main configuration file as well. This is
 C</private/etc/apache2/httpd.conf>. Specify this with the C<mac> option.
 
-=item 2 
+=item 2
 
 Blow away the bogus VHOSTS. Specify this with the C<clear> option.
 Don't do that if you have already set up legitimate VHOSTS.
