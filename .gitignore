@@ -1,3 +1,4 @@
 .includepath
 /user-env.*
 /bin/
+/pull-all.sh

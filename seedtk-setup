@@ -20,7 +20,7 @@ for my $mod (@modules)
     my $rc = system("git", "clone", $url);
     if ($rc != 0)
     {
-	die "Error cloning $url\n";
+        die "Error cloning $url\n";
     }
 }
 
