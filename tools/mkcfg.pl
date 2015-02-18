@@ -1,4 +1,4 @@
-use Config::Simple;
+require Config::Simple;
 use Getopt::Long;
 use Pod::Usage;
 our $VERSION = "0.1.0";
