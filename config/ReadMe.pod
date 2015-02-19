@@ -572,6 +572,4 @@ L<Index of SEEDtk Scripts|scripts>
 =cut
 
 
-##TODO Adjust Eclipse setup procedure for the Mac
-
 1;
