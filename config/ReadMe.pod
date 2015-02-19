@@ -349,11 +349,12 @@ For each project you want to create:
 
 =item 1
 
-Use I<File, Import, Git, Projects from Git, Clone URI> to get to the B<Source Git Repository> dialog.
-Enter the URI C<https://github.com/SEEDtk/>I<project> where I<project> is the current project (either
-C<seedtk>, C<ERDB>, C<kernel>, C<utils>, or C<Web>). Enter your GITHUB username in the I<User> box of
-the I<Authentication> section, and your GITHUB password below it in the I<Password> box. If you check
-I<Store in Secure Store>, you'll never have to enter the user name or passwword again. Click I<Next>
+From the main Eclipse menu, select I<File, Import, Git, Projects from Git, Clone URI> to get to the
+B<Source Git Repository> dialog. Enter the URI C<https://github.com/SEEDtk/>I<project> where I<project>
+is the current project (either C<SEEDtk>, C<ERDB>, C<kernel>, C<utils>, or C<Web>). Enter your GITHUB
+username in the I<User> box of the I<Authentication> section, and your GITHUB password below it in the
+I<Password> box. If you check I<Store in Secure Store>, you'll never have to enter the user name or
+passwword again. Click I<Next>
 
 =item 2
 
@@ -393,9 +394,9 @@ Your project has numerous errors because the library paths are not properly spec
 this now by running the L<Config.pl> script. First, however, we need to create a data directory.
 Go into your workspace directory and create a new folder called C<Data>.
 
-Use I<Run, Run Configurations> to get the B<Create, manage, and run configurations> dialog. Click
-I<Perl Local> to highlight it and click the B<New> tool to create a new launch configuration. You should
-be on the I<Main> tab. Type C<kernel> in the I<Project> box and C<scripts/Config.pl> in the
+From the Eclipse menu, select I<Run, Run Configurations> to get the B<Create, manage, and run configurations>
+dialog. Click I<Perl Local> to highlight it and click the B<New> tool to create a new launch configuration.
+You should be on the I<Main> tab. Type C<kernel> in the I<Project> box and C<scripts/Config.pl> in the
 I<File to execute> box. Change the configuration name to C<Initial Configuration> so you know this is
 the first-time Config call. If you've done something wrong, you'll get a little error message at the
 top of the dialog and the I<Run> button will dim.
@@ -413,10 +414,10 @@ all disappear except for one or two indicating PERL modules you need to install.
 installed the missing packages, clean the offending projects and you should have a pristine,
 error-free environment.
 
-Finally, you must go into I<Window, Preferences, Git, Configuration>. On the I<User Settings>
-tab, click I<Add Entry> and specify a key of C<core.autocrlf> and a value of C<true>. This
-insures that your line endings are translated properly during transfers to and from the
-repository.
+Finally, you must go into I<Window, Preferences, Git, Configuration> from the menu. On the
+I<User Settings> tab, click I<Add Entry> and specify a key of C<core.autocrlf> and a value of
+C<true>. This insures that your line endings are translated properly during transfers to and
+from the repository.
 
 =head2 The Config.pl Script
 
@@ -445,12 +446,7 @@ You'll need to clean up the install files if it works.
     rmdir gd
     rm gd.tar.gz
 
-In order to install L<Config::Simple> you need to accept the xcode license. This requires sudoing
-to root (again in a terminal window) and typing
-
-    xcodebuild -license
-
-You will also need MySQL, which can be found L<here|http:dev.mysql.com/downloads/>.
+You will also need MySQL, which can be found L<here|http//:dev.mysql.com/downloads/>.
 
 =head2 Setting up the Database
 
@@ -470,7 +466,7 @@ Assuming you use the examples above (and you shouldn't), you would then configur
 the database name and user information in L<FIG_Config> as follows
 
     our $shrubDB = "seedtk_shrub";
-    our $userData = "seed_remote/Quintus";
+    our $userData = "seed/dna=fun";
 
 Note that in the C<$userData> variable the string is the user name, a slash, and
 then the password. B<If you are using your own database, do not leave the C<$shrubDB>
