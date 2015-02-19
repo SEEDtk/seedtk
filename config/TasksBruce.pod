@@ -1,8 +1,0 @@
-=head1 Task List for Bruce
-
-This file contains Bruce's current to-do list.
-
-=cut
-
-    ## TODO Create script to change the function of a feature
-    ## TODO Load Terry's new data into a database
