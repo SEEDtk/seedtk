@@ -1,13 +1,13 @@
-use Config::Simple;
+require Config::Simple;
 use Getopt::Long;
 use Pod::Usage;
 our $VERSION = "0.1.0";
 
 GetOptions ('h',    \$help,
-	    'help', \$help,
-	    'a',    \$abort_on_conflict,
-	    't=s',    \$target,
-	   );
+        'help', \$help,
+        'a',    \$abort_on_conflict,
+        't=s',    \$target,
+       );
 pod2usage(-exitstatus => 0, -verbose => 2) if $help;
 
 # we need to assume that some environment variables are available
@@ -21,36 +21,36 @@ my $local_cfg  = Config::Simple->new( syntax => 'ini' );
 
 # if there is a global deployment.cfg file, read it
 if (defined $target && $target ne "") {
-	# then use the command line provided target
-	die "$target is not a valid directory" unless -d $target;
-	die "$target is not a writable directory" unless -w $target;
-	$ENV{TARGET} = $target;
+    # then use the command line provided target
+    die "$target is not a valid directory" unless -d $target;
+    die "$target is not a writable directory" unless -w $target;
+    $ENV{TARGET} = $target;
 }
 if (-e "$ENV{TARGET}/deployment.cfg" ) {
-	$global_cfg->read("$ENV{TARGET}/deployment.cfg")
-	  or die "can not read $ENV{TARGET}/deployment.cfg\n", $global_cfg->error();
-	$global_cfg->save("$ENV{TARGET}/deployment.cfg.bak");
+    $global_cfg->read("$ENV{TARGET}/deployment.cfg")
+      or die "can not read $ENV{TARGET}/deployment.cfg\n", $global_cfg->error();
+    $global_cfg->save("$ENV{TARGET}/deployment.cfg.bak");
 }
 
 # if there is a module deploy.cfg available, read it
 if (-e './deploy.cfg') {
-	$local_cfg->read('./deploy.cfg')
-	  or die "can not read ./deploy.cfg", $local_cfg->error();
+    $local_cfg->read('./deploy.cfg')
+      or die "can not read ./deploy.cfg", $local_cfg->error();
 }
 
 # merge the two configs, issueing a warning if the same key exists with
 # different values between the two config files
 foreach my $key (keys %{$local_cfg->vars()} ) {
-	if ($global_cfg->param($key) and
-	    $global_cfg->param($key) ne $local_cfg->param($key)) {
-		warn "key conflict: global $key, ", $global_cfg->param($key), "\n",
-		     "key conflict: local  $key, ", $local_cfg->param($key),  "\n",
-		     "keeping global config\n";
-		die "and aborting -  on conflict is set to true" if defined $abort_on_conflict;
-	}
-	else {
-		$global_cfg->param($key, $local_cfg->param($key));
-	}
+    if ($global_cfg->param($key) and
+        $global_cfg->param($key) ne $local_cfg->param($key)) {
+        warn "key conflict: global $key, ", $global_cfg->param($key), "\n",
+             "key conflict: local  $key, ", $local_cfg->param($key),  "\n",
+             "keeping global config\n";
+        die "and aborting -  on conflict is set to true" if defined $abort_on_conflict;
+    }
+    else {
+        $global_cfg->param($key, $local_cfg->param($key));
+    }
 }
 
 # write out the resulting global deployment config
