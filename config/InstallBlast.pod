@@ -2,14 +2,21 @@
 
 =head2 Installing BLAST on Windows
 
-To install BLAST on Windows, download B<ncbi-blast-#.#.##+-win64.exe>, where I<#.#.##> indicates the current version number,
-from L<ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/>. After running the EXE file, run L<Config.pl> to fix
-up your execution paths.
+To install BLAST on Windows, download L<ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.2.30+-win64.exe>.
+After running the EXE file, run L<Config.pl> to fix up your execution paths.
 
 =head2 Installing BLAST on the Mac
 
-To install BLAST on the Mac, download B<ncbi-blase-#.#.##+-universal-macosx.tar.gz>, where I<#.#.##> indicates the current
-version number, from L<ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/>. Double-clicking this file in your
-downloads directory willAfter running the EXE file, run L<Config.pl> to fix
-up your execution paths.
+To install BLAST on the Mac, download L<ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.2.30+-universal-macosx.tar.gz>.
+Run the L<InstallTool.pl> script specifying the downloaded file as the parameter. This unpacks the tar file into the packages directory.
+Run L<Config.pl> to update the directory pointers.
+
+=head2 Installing BLASE on Unix
+
+Use
+
+    curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/LATEST/ncbi-blast-2.2.30+-x64-linux.tar.gz
+    InstallTools ncbi-blast-2.2.30+-x64-linux.tar.gz
+    Config
+
 
