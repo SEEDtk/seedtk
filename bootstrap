@@ -30,6 +30,7 @@ export KB_RUNTIME=$rt_dir
 export KB_PERL_PATH=$perl_lib
 export KB_PYTHON_PATH=$python_lib
 export KB_R_PATH=$rscript_lib
+export STK_TYPE=Unix
 $rt_dir/bin/perl $top_dir/$src "\$@"
 EOF
     chmod +x $dst
@@ -45,6 +46,7 @@ export KB_RUNTIME=$rt_dir
 export KB_PERL_PATH=$perl_lib
 export KB_PYTHON_PATH=$python_lib
 export KB_R_PATH=$rscript_lib
+export STK_TYPE=Unix
 bash $top_dir/$src "\$@"
 EOF
     chmod +x $dst

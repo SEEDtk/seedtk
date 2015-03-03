@@ -11,7 +11,7 @@ To install BLAST on the Mac, download L<ftp://ftp.ncbi.nlm.nih.gov/blast/executa
 Run the L<InstallTool.pl> script specifying the downloaded file as the parameter. This unpacks the tar file into the packages directory.
 Run L<Config.pl> to update the directory pointers.
 
-=head2 Installing BLASE on Unix
+=head2 Installing BLAST on Unix
 
 Use
 
