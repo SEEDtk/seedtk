@@ -30,6 +30,7 @@ export KB_RUNTIME=$rt_dir
 export KB_PERL_PATH=$perl_lib
 export KB_PYTHON_PATH=$python_lib
 export KB_R_PATH=$rscript_lib
+export STK_TYPE=Unix
 $rt_dir/bin/perl $top_dir/$src "\$@"
 EOF
     chmod +x $dst
@@ -45,29 +46,30 @@ export KB_RUNTIME=$rt_dir
 export KB_PERL_PATH=$perl_lib
 export KB_PYTHON_PATH=$python_lib
 export KB_R_PATH=$rscript_lib
+export STK_TYPE=Unix
 bash $top_dir/$src "\$@"
 EOF
     chmod +x $dst
 }
 
 if [ $# -lt 1 ] ; then
-    
+
     #
     # Check for common default runtimes.
     #
     for r in /vol/rast-bcr/2010-1124/linux-rhel5-x86_64 /vol/kbase/runtime /kb/runtime /Applications/RASTtk.app/runtime ; do
-	if [ -d $r ] ; then
-	    rt_dir=$r
-	    echo "Setting runtime to $rt_dir"
-	    break
-	fi
+    if [ -d $r ] ; then
+        rt_dir=$r
+        echo "Setting runtime to $rt_dir"
+        break
+    fi
     done
 
     if [ "$rt_dir" = "" ] ; then
-	if [ -L runtime ] ; then
-	    fail "Usage: $0 runtime-dir [top-dir]"
-	fi
-	rt_dir=`readlink runtime`
+    if [ -L runtime ] ; then
+        fail "Usage: $0 runtime-dir [top-dir]"
+    fi
+    rt_dir=`readlink runtime`
     fi
     top_dir=`pwd`
 else
@@ -91,7 +93,7 @@ fi
 if [ -d $top_dir/runtime ] ; then
     t=`readlink $top_dir/runtime`
     if [ "$t" != "$rt_dir" ] ; then
-	fail "Runtime already configured; remove $top_dir/runtime if you wish to re-bootstrap."
+    fail "Runtime already configured; remove $top_dir/runtime if you wish to re-bootstrap."
     fi
 fi
 
@@ -101,25 +103,25 @@ fi
 missing_deps=""
 for moddir in modules/* ; do
     if [ -f $moddir/DEPENDENCIES ] ; then
-	mod=`basename $moddir`
-	for dep in `cat $moddir/DEPENDENCIES`; do 
-	    if [ ! -d modules/$dep ] ; then
-		missing_deps="$missing_deps $mod:$dep"
-	    fi
-	done
+    mod=`basename $moddir`
+    for dep in `cat $moddir/DEPENDENCIES`; do
+        if [ ! -d modules/$dep ] ; then
+        missing_deps="$missing_deps $mod:$dep"
+        fi
+    done
     fi
 done
 
 if [ "$missing_deps" != "" ] ; then
     echo "ERROR: The following modules were listed as dependencies but were not present in the modules directory:" 1>&2
     for missing in $missing_deps; do
-    	echo $missing | sed -e 's/\(.*\):/   from module \1: /' 1>&2
+        echo $missing | sed -e 's/\(.*\):/   from module \1: /' 1>&2
     done
     if [ "$KB_IGNORE_MISSING_DEPENDENCIES" ] ; then
-	echo "Ignoring missing dependencies."
+    echo "Ignoring missing dependencies."
     else
-	echo "Please check these modules out and rerun '$0'"
-	exit 1
+    echo "Please check these modules out and rerun '$0'"
+    exit 1
     fi
 fi
 
@@ -142,58 +144,58 @@ classpath="\$KB_RUNTIME/lib/*"
 for moddir in modules/* ; do
     p=$top_dir/$moddir
     if [ -d $p ] ; then
-	elt="\$KB_TOP/$moddir/dist/lib"
-	classpath="${classpath}:$elt/*"
+    elt="\$KB_TOP/$moddir/dist/lib"
+    classpath="${classpath}:$elt/*"
     fi
 done
 
 #
 # Configure the appropriate JAVA_HOME.
 #
-# If we come in with a JAVA_HOME set, use that. 
+# If we come in with a JAVA_HOME set, use that.
 #
 
 if [ "$require_java" != 0 ] ; then
 
     java_path=''
     if [ "$JAVA_HOME" = "" ] ; then
-	if [ -d "$rt_dir/java" ] ; then
-	    elt="\$KB_RUNTIME/java"
-	    java_path=$elt
-	elif [ -x /usr/libexec/java_home ] ; then
-	    java_path=`/usr/libexec/java_home`
-	elif [ -d "/Library/Java/Home" ] ; then
-	# Mac
-	    java_path="/Library/Java/Home"
-	else 
-	    echo "JAVA_HOME not found" 1>&2
-	    exit 1
-	#
-	# Try to find javac, and set based on that.
-	#
-	fi
+    if [ -d "$rt_dir/java" ] ; then
+        elt="\$KB_RUNTIME/java"
+        java_path=$elt
+    elif [ -x /usr/libexec/java_home ] ; then
+        java_path=`/usr/libexec/java_home`
+    elif [ -d "/Library/Java/Home" ] ; then
+    # Mac
+        java_path="/Library/Java/Home"
     else
-	java_path="$JAVA_HOME"
+        echo "JAVA_HOME not found" 1>&2
+        exit 1
+    #
+    # Try to find javac, and set based on that.
+    #
+    fi
+    else
+    java_path="$JAVA_HOME"
     fi
 
     #
     # Configure the appropriate CATALINA_HOME.
     #
-    # If we come in with a CATALINA_HOME set, use that. 
+    # If we come in with a CATALINA_HOME set, use that.
     #
     tomcat_path=''
     if [ "$CATALINA_HOME" = "" ] ; then
-	if [ -d "$rt_dir/tomcat" ] ; then
-	    elt="\$KB_RUNTIME/tomcat"
-	    tomcat_path=$elt
-	elif [ -d "/Library/Tomcat/Home" ] ; then
-	# Mac
-	    tomcat_path="/Library/Tomcat/Home"
-	else 
-	    echo "CATALINA_HOME not found" 1>&2
-	fi
+    if [ -d "$rt_dir/tomcat" ] ; then
+        elt="\$KB_RUNTIME/tomcat"
+        tomcat_path=$elt
+    elif [ -d "/Library/Tomcat/Home" ] ; then
+    # Mac
+        tomcat_path="/Library/Tomcat/Home"
     else
-	tomcat_path="$CATALINA_HOME"
+        echo "CATALINA_HOME not found" 1>&2
+    fi
+    else
+    tomcat_path="$CATALINA_HOME"
     fi
 fi
 
@@ -203,8 +205,8 @@ perl_lib="\$KB_TOP/config"
 for moddir in modules/* ; do
     p=$top_dir/$moddir/lib
     if [ -d $p ] ; then
-	elt="\$KB_TOP/$moddir/lib"
-	if [ "$perl_lib" = "" ] ; then perl_lib=$elt ; else perl_lib="$perl_lib:$elt" ; fi
+    elt="\$KB_TOP/$moddir/lib"
+    if [ "$perl_lib" = "" ] ; then perl_lib=$elt ; else perl_lib="$perl_lib:$elt" ; fi
         modname=`basename $moddir`
         if [ "$modlist" = "" ] ; then modlist=$modname ; else modlist="$modlist $modname" ; fi
         if [ "$modlistc" = "" ] ; then modlistc=$modname ; else modlistc="$modlistc, $modname" ; fi
@@ -242,8 +244,8 @@ python_lib="\$KB_TOP/config"
 for moddir in modules/* ; do
     p=$top_dir/$moddir/lib
     if [ -d $p ] ; then
-	elt="\$KB_TOP/$moddir/lib"
-	if [ "$python_lib" = "" ] ; then python_lib=$elt ; else python_lib="$python_lib:$elt" ; fi
+    elt="\$KB_TOP/$moddir/lib"
+    if [ "$python_lib" = "" ] ; then python_lib=$elt ; else python_lib="$python_lib:$elt" ; fi
     fi
 done
 
@@ -255,8 +257,8 @@ rscript_lib=""
 for moddir in modules/* ; do
     p=$top_dir/$moddir/lib
     if [ -d $p ] ; then
-	elt="\$KB_TOP/$moddir/lib"
-	if [ "$rscript_lib" = "" ] ; then rscript_lib=$elt ; else rscript_lib="$rscript_lib:$elt" ; fi
+    elt="\$KB_TOP/$moddir/lib"
+    if [ "$rscript_lib" = "" ] ; then rscript_lib=$elt ; else rscript_lib="$rscript_lib:$elt" ; fi
     fi
 done
 
@@ -266,15 +268,15 @@ done
 
 for script in tools/*.pl ; do
     if [ -f $script ] ; then
-	base=`basename $script .pl`
-	wrap_perl $script tools/$base
+    base=`basename $script .pl`
+    wrap_perl $script tools/$base
     fi
 done
 
 for script in tools/*.sh ; do
     if [ -f $script ] ; then
-	base=`basename $script .sh`
-	wrap_sh $script tools/$base
+    base=`basename $script .sh`
+    wrap_sh $script tools/$base
     fi
 done
 
@@ -288,6 +290,7 @@ export KB_PYTHON_PATH=$python_lib
 export KB_R_PATH=$rscript_lib
 export JAVA_HOME=$java_path
 export CATALINA_HOME=$tomcat_path
+export STK_TYPE=Unix
 export PATH=$path_str
 if [ "$PERL5LIB" = "" ] ; then
     export PERL5LIB=\$KB_PERL_PATH
@@ -315,6 +318,7 @@ setenv PYTHONPATH \$KB_PYTHON_PATH:\$PYTHONPATH
 setenv R_LIBS \$KB_R_PATH:\$R_LIBS
 setenv GLASSFISH_HOME \$KB_RUNTIME/glassfish3
 setenv CLASSPATH $classpath
+setenv STK_TYPE Unix
 rehash
 EOF
 
