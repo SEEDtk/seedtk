@@ -1,4 +1,6 @@
 .includepath
+.DS_Store
+.localized
 /user-env.*
 /bin/
 /pull-all.sh
