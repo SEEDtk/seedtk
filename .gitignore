@@ -5,6 +5,7 @@
 /bin/
 /pull-all.sh
 /pull-all.cmd
-packages/**
+/packages/**
+/packages
 *~
 *#
