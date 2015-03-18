@@ -3,7 +3,7 @@
 use strict;
 use File::Basename;
 
-my @modules = qw(utils ERDB kernel);
+my @modules = qw(utils ERDB kernel RASTtk);
 
 my $rstr = `git remote -v`;
 my($remote) = $rstr =~ /^origin\s+(\S+)/;
