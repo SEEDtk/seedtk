@@ -7,5 +7,7 @@
 /pull-all.cmd
 /packages/**
 /packages
+/logs/**
+/logs
 *~
 *#
