@@ -291,6 +291,7 @@ export KB_R_PATH=$rscript_lib
 export JAVA_HOME=$java_path
 export CATALINA_HOME=$tomcat_path
 export STK_TYPE=Unix
+export SERVICE=SEEDtk
 export PATH=$path_str
 if [ "$PERL5LIB" = "" ] ; then
     export PERL5LIB=\$KB_PERL_PATH
@@ -319,7 +320,7 @@ setenv R_LIBS \$KB_R_PATH:\$R_LIBS
 setenv GLASSFISH_HOME \$KB_RUNTIME/glassfish3
 setenv CLASSPATH $classpath
 setenv STK_TYPE Unix
-setenv SERVIEC SEEDtk
+setenv SERVICE SEEDtk
 rehash
 EOF
 
