@@ -91,7 +91,6 @@ deploy-user-env:
 	echo "export JAVA_HOME=$$q\$$KB_RUNTIME/java$$q" >> $$dest; \
 	echo "export CATALINA_HOME=$$q\$$KB_RUNTIME/tomcat$$q" >> $$dest; \
 	echo "export PATH=$$q\$$JAVA_HOME/bin:\$$KB_TOP/bin:\$$KB_RUNTIME/bin:\$$PATH$$q" >> $$dest;
-	echo "export SERVICE=SEEDtk" >> $dest;
 
 	dest=$(TARGET)/user-env.csh; \
 	q='"'; \
