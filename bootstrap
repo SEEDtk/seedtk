@@ -319,6 +319,7 @@ setenv R_LIBS \$KB_R_PATH:\$R_LIBS
 setenv GLASSFISH_HOME \$KB_RUNTIME/glassfish3
 setenv CLASSPATH $classpath
 setenv STK_TYPE Unix
+setenv SERVIEC SEEDtk
 rehash
 EOF
 
