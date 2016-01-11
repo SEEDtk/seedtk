@@ -57,7 +57,7 @@ if [ $# -lt 1 ] ; then
     #
     # Check for common default runtimes.
     #
-    for r in /vol/rast-bcr/2010-1124/linux-rhel5-x86_64 /vol/kbase/runtime /kb/runtime /Applications/RASTtk.app/runtime ; do
+    for r in /vol/rast-bcr/2010-1124/linux-rhel5-x86_64 /vol/kbase/runtime /kb/runtime /Applications/RASTtk.app/runtime /usr/bin ; do
     if [ -d $r ] ; then
         rt_dir=$r
         echo "Setting runtime to $rt_dir"
