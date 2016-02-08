@@ -191,6 +191,19 @@ if ($ENV{KB_TOP}) {
                 die "Error cloning $url\n";
             }
         }
+        if ($ARGV[1]) {
+            # Here we want a web directory.
+            if ($ARGV[1] eq 'Web') {
+                print "Web directory will be generated in current location.\n";
+            } elsif ($ARGV[1] =~ /^(.+)[\/\\]Web$/i) {
+                my $web_parent = $1;
+                print "Web directory is child of $web_parent.\n";
+                chdir $web_parent;
+            } else {
+                die "Web directory name must end with 'Web' in this mode.";
+            }
+            system("git", "clone", "$remote_base/Web.git");
+        }
     }
     # Get access to the utilities library.
     unshift @INC, $libDir;
