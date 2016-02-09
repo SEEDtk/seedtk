@@ -260,7 +260,8 @@ if (! defined $FIG_Config::data) {
     if (! defined $dataRootDir) {
         die "A data root directory is required if no current value exists in FIG_Config.";
     } elsif (! -d $dataRootDir) {
-        die "The specified data root directory $dataRootDir was not found.";
+        print "Creating $dataRootDir\n";
+        File::Copy::Recursive::pathmk($dataRootDir) || die "Could not create $dataRootDir: $!";
     }
 } else {
     $dataRootDir = $FIG_Config::data;
