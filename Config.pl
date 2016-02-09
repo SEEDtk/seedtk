@@ -21,6 +21,7 @@ use strict;
 use File::Basename;
 use File::Spec;
 use File::Copy;
+use File::Copy::Recursive;
 use File::Path;
 use Getopt::Long::Descriptive;
 use XML::Writer;
