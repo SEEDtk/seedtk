@@ -1002,30 +1002,10 @@ sub SetupBinaries {
         closedir $dh;
         # Loop through them, creating the wrappers.
         for my $script (@scripts) {
-            # Get the unsuffixed script name and the suffix.
-            my ($binaryName, $type) = $script =~ /(.+)\.(.+)/;
-            # Create the wrapper file.
-            my $fileName = "$binDir/$binaryName";
-            open(my $oh, ">$fileName") || die "Could not open $binaryName: $!";
-            print $oh "#!/usr/bin/env bash\n";
-            if ($type eq 'pl') {
-                    # For PERL, we ask perl to execute the file.
-                print $oh "perl $scriptDir/$script \"\$\@\"\n";
-            } elsif ($type eq 'sh') {
-                    # For bash, we execute the file directly. This requires updating permissions.
-                print $oh "$scriptDir/$script \"\$\@\"\n";
-                chmod 0x755, "$scriptDir/$script";
-            } else {
-                die "Invalid script suffix $type found in $scriptDir.\n";
-            }
-            close $oh;
-            # Turn on the execution bits.
-            my @finfo = stat $fileName;
-            my $newMode = ($finfo[2] & 0777) | 0111;
-            chmod $newMode, $fileName;
-            # Denote we created this file.
-            $wrappers{$binaryName} = 1;
+            SetupScript($script, $binDir, $scriptDir, \%wrappers);
         }
+        # Create the Config script.
+        SetupScript('Config.pl', $binDir, $projDir, \%wrappers);
     }
     # Now delete the obsolete wrappers.
     opendir(my $dh, $binDir) || die "Could not open binary directory $binDir: $!";
@@ -1143,4 +1123,31 @@ sub SetupCGIs {
         }
         print "CGI permissions set.\n";
     }
+}
+
+sub SetupScript {
+    my ($script, $binDir, $scriptDir, $wrappers) = @_;
+    # Get the unsuffixed script name and the suffix.
+    my ($binaryName, $type) = $script =~ /(.+)\.(.+)/;
+    # Create the wrapper file.
+    my $fileName = "$binDir/$binaryName";
+    open(my $oh, ">$fileName") || die "Could not open $binaryName: $!";
+    print $oh "#!/usr/bin/env bash\n";
+    if ($type eq 'pl') {
+            # For PERL, we ask perl to execute the file.
+        print $oh "perl $scriptDir/$script \"\$\@\"\n";
+    } elsif ($type eq 'sh') {
+            # For bash, we execute the file directly. This requires updating permissions.
+        print $oh "$scriptDir/$script \"\$\@\"\n";
+        chmod 0x755, "$scriptDir/$script";
+    } else {
+        die "Invalid script suffix $type found in $scriptDir.\n";
+    }
+    close $oh;
+    # Turn on the execution bits.
+    my @finfo = stat $fileName;
+    my $newMode = ($finfo[2] & 0777) | 0111;
+    chmod $newMode, $fileName;
+    # Denote we created this file.
+    $wrappers->{$binaryName} = 1;
 }
