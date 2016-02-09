@@ -163,8 +163,17 @@ if ($ENV{KB_TOP}) {
     $base_dir = $ENV{KB_TOP};
     ($dataParm, $webParm) = @ARGV;
 } else {
+    # Clean up the incoming path names.
+    if ($ARGV[0]) {
+        $dataParm = File::Spec->rel2abs($ARGV[0]);
+    }
+    if ($ARGV[1]) {
+        $webParm = File::Spec->rel2abs($ARGV[1]);
+    }
     # Get the directory this script is running in.
     $base_dir = dirname(File::Spec->rel2abs(__FILE__));
+    # Get into it.
+    chdir $base_dir;
     # Fix Windows slash craziness.
     $base_dir =~ tr/\\/\//;
     # Check our directory name.
@@ -176,13 +185,6 @@ if ($ENV{KB_TOP}) {
     }
     # Denote this is vanilla mode.
     $vanillaMode = 1;
-    # Clean up the incoming path names.
-    if ($ARGV[0]) {
-        $dataParm = File::Spec->rel2abs($ARGV[0]);
-    }
-    if ($ARGV[1]) {
-        $webParm = File::Spec->rel2abs($ARGV[1]);
-    }
     # Do we need to bootstrap?
     my $libDir = "$base_dir/utils/lib";
     if (! -f "$libDir/Env.pm") {
