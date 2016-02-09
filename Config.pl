@@ -200,6 +200,8 @@ if ($ENV{KB_TOP}) {
                 die "Explicit web directory not supported in this mode.";
             }
             system("git", "clone", "$remote_base/Web.git");
+            # Horrible hack because of bad design in the GIT project.
+            $ARGV[1] .= "/Web";
         }
     }
     # Get access to the utilities library.
