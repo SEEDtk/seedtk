@@ -155,7 +155,7 @@ if (defined $eclipseParm) {
 # Get the base directory. For Unix, this is the project
 # directory. For vanilla mode, this is the project directory's
 # parent. We will also figure out the eclipse mode here.
-my ($base_dir, $vanillaMode);
+my ($base_dir, $vanillaMode, $projName);
 if ($ENV{KB_TOP}) {
     # Here we are in a Unix setup. The base directory has been
     # stored in the environment.
@@ -166,11 +166,11 @@ if ($ENV{KB_TOP}) {
     # Fix Windows slash craziness.
     $base_dir =~ tr/\\/\//;
     # Check our directory name.
-    my $projDir = $eclipseParm || 'SEEDtk';
-    if ($base_dir =~ /(.+)\/$projDir/) {
+    $projName = $eclipseParm || 'SEEDtk';
+    if ($base_dir =~ /(.+)\/$projName/) {
         $base_dir = $1;
     } else {
-        die "Configuration script not found in $projDir.";
+        die "Configuration script not found in $projName.";
     }
     # Denote this is vanilla mode.
     $vanillaMode = 1;
@@ -214,7 +214,7 @@ print "Analyzing directories.\n";
 # The root directories will be put in here.
 my ($dataRootDir, $webRootDir) = ('', '');
 # This points to the project directory project.
-my $projDir = ($vanillaMode ? join("/", $base_dir, $eclipseParm) : $base_dir);
+my $projDir = ($vanillaMode ? join("/", $base_dir, $projName) : $base_dir);
 if (! -d "$projDir/config") {
     die "Project directory not found in $projDir.";
 }
