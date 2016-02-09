@@ -156,11 +156,12 @@ if (defined $eclipseParm) {
 # Get the base directory. For Unix, this is the project
 # directory. For vanilla mode, this is the project directory's
 # parent. We will also figure out the eclipse mode here.
-my ($base_dir, $vanillaMode, $projName);
+my ($base_dir, $vanillaMode, $projName, $dataParm, $webParm);
 if ($ENV{KB_TOP}) {
     # Here we are in a Unix setup. The base directory has been
     # stored in the environment.
     $base_dir = $ENV{KB_TOP};
+    ($dataParm, $webParm) = @ARGV;
 } else {
     # Get the directory this script is running in.
     $base_dir = dirname(File::Spec->rel2abs(__FILE__));
@@ -175,6 +176,13 @@ if ($ENV{KB_TOP}) {
     }
     # Denote this is vanilla mode.
     $vanillaMode = 1;
+    # Clean up the incoming path names.
+    if ($ARGV[0]) {
+        $dataParm = File::Spec->rel2abs($ARGV[0]);
+    }
+    if ($ARGV[1]) {
+        $webParm = File::Spec->rel2abs($ARGV[1]);
+    }
     # Do we need to bootstrap?
     my $libDir = "$base_dir/utils/lib";
     if (! -f "$libDir/Env.pm") {
@@ -192,16 +200,12 @@ if ($ENV{KB_TOP}) {
                 die "Error cloning $url\n";
             }
         }
-        if ($ARGV[1]) {
+        if ($webParm) {
             # Here we want a web directory.
-            if ($ARGV[1] eq 'Web') {
-                print "Web directory will be generated in current location.\n";
-            } else {
-                die "Explicit web directory not supported in this mode.";
-            }
+            print "Web directory will be generated in current location.\n";
             system("git", "clone", "$remote_base/Web.git");
-            # Horrible hack because of bad design in the GIT project.
-            $ARGV[1] .= "/Web";
+            # Compute the real web directory.
+            $webParm = "$base_dir/Web/Web";
         }
     }
     # Get access to the utilities library.
