@@ -1033,6 +1033,8 @@ directories. This involves creating a file with a CMD extension, changing
 the continuation characters from C<\> to C<^>, and changing the parameter
 marks from $n to %n.
 
+=over 4
+
 =item modules
 
 Reference to a hash that maps each module name to its directory. The
