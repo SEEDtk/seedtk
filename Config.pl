@@ -407,6 +407,12 @@ for my $module (@FIG_Config::modules) {
     print $oh "cd $modules{$module}\n";
     print $oh "git pull\n";
 }
+# Add the web directory if needed.
+if ($FIG_Config::web_dir && ! $ENV{KB_TOP}) {
+    print $oh "echo Pulling web directory\n";
+    print $oh "cd $FIG_Config::web_dir\n";
+    print $oh "git pull\n";
+}
 # Restore the old directory.
 print $oh "popd\n";
 close $oh;
