@@ -336,7 +336,7 @@ if ($opt->remoteweb) {
                 if ($line =~ /^#!.+perl/) {
                     print $oh "#!$perl_loc\n";
                 } else {
-                    print $line;
+                    print $oh $line;
                 }
             }
             # Fix the permissions.
