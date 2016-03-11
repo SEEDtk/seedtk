@@ -325,7 +325,7 @@ if ($opt->remoteweb) {
         my $destPath = "$webRootDir/$webItem";
         if (-d $itemPath) {
             print "Copying directory $webItem.\n";
-            File::Copy::Recursive($itemPath, $destPath);
+            File::Copy::Recursive::dircopy($itemPath, $destPath);
         } elsif ($webItem =~ /\.cgi$/) {
             # Here we have a CGI script, which we copy manually.
             print "Converting $webItem.\n";
