@@ -113,6 +113,15 @@ Password for signing on to the database. The default is an empty string, meaning
 
 Name of a directory in which to create a shadow FIG_Config for the kbase environment.
 
+=item remoteWeb
+
+If specified, the web directory will be cleared and reloaded from GIT, then updated
+with an explicit PERL path in the shebang header. This is useful when the default PERL 
+will not work on the web. The resulting web directory cannot be refreshed from GIT 
+without destroying the site. Instead, it must be updated using this script. This option 
+is only for Unix. In Windows, the shebang line is not used.
+
+
 =back
 
 =head2 Notes for Programmers
@@ -142,6 +151,7 @@ my ($opt, $usage) = describe_options('%o %c dataRootDirectory webRootDirectory',
         ["dbpass=s", "Shrub database password"],
         ["kbase=s", "kbase lib directory"],
         ["eclipse:s", "if specified, then we will set up for Eclipse"],
+        ["remoteWeb", "if specified, the web directory will be configured as a remote web site (Unix only)"],
         );
 print "Retrieving current configuration.\n";
 # Compute the eclipse option.
@@ -153,6 +163,10 @@ if (defined $eclipseParm) {
         $eclipseParm = 'SEEDtk';
     }
 }
+# Compute the remote base directory.
+my $rstr = `git remote -v`;
+my($remote) = $rstr =~ /^origin\s+(\S+)/;
+my $remote_base = dirname($remote);
 # Get the base directory. For Unix, this is the project
 # directory. For vanilla mode, this is the project directory's
 # parent. We will also figure out the eclipse mode here.
@@ -189,9 +203,6 @@ if ($ENV{KB_TOP}) {
     my $libDir = "$base_dir/utils/lib";
     if (! -f "$libDir/Env.pm") {
         # Yes. Clone everything.
-        my $rstr = `git remote -v`;
-        my($remote) = $rstr =~ /^origin\s+(\S+)/;
-        my $remote_base = dirname($remote);
         print "Check out from $remote_base\n";
         chdir $base_dir;
         for my $module (CORE) {
@@ -284,6 +295,58 @@ if (! defined $FIG_Config::web_dir) {
     }
 } else {
     $webRootDir = $FIG_Config::web_dir;
+}
+# If this is a remote web situation, we need to re-create the web directory here.
+if ($opt->remoteweb) {
+    if (! -d $webRootDir) {
+        die "Web root directory $webRootDir does not exist.";
+    }
+    print "Clearing $webRootDir.\n";
+    File::Copy::Recursive::pathempty($webRootDir);
+    # We have to pull the web stuff into a temporary location and then copy it over, modifying the
+    # CGI files as we go. This is pretty complicated. First, we need to know the perl location.
+    my $perl_loc = `which perl`;
+    # Now we pull the web project directly into the SEEDtk directory.
+    chdir $base_dir;
+    my $webSource = "$base_dir/Web/Web";
+    if (-f "$webSource/index.html") {
+        print "Refreshing source web directory.\n";
+        system("git", "pull");
+    } else {
+        print "Retrieving source web directory.\n";
+        system("git", "clone", "$remote_base/Web.git");
+    }
+    # Copy the web directory.
+    opendir(my $dh, $webSource) || die "Could not open web source directory $webSource: $!";
+    # Get all the objects in it that are not hidden.
+    my @webItems = grep { substr($_,0,1) ne '.' } readdir $dh;
+    for my $webItem (@webItems) {
+        my $itemPath = "$webSource/$webItem";
+        my $destPath = "$webRootDir/$webItem";
+        if (-d $itemPath) {
+            print "Copying directory $webItem.\n";
+            File::Copy::Recursive($itemPath, $destPath);
+        } elsif ($webItem =~ /\.cgi$/) {
+            # Here we have a CGI script, which we copy manually.
+            print "Converting $webItem.\n";
+            open(my $ih, "<$itemPath") || die "Could not open $itemPath: $!";
+            open(my $oh, ">$destPath") || die "Could not open $destPath: $!";
+            while (! eof $ih) {
+                my $line = <$ih>;
+                if ($line =~ /^#!.+perl/) {
+                    print "#!$perl_loc\n";
+                } else {
+                    print $line;
+                }
+            }
+            # Fix the permissions.
+            chmod 0755, $destPath;
+        } else {
+            # Normal files are copied normally.
+            print "Copying file $webItem.\n";
+            File::Copy::Recursive::fcopy($itemPath, $destPath);
+        }
+    }
 }
 #If the FIG_Config write has NOT been turned off, then write the FIG_Config.
 if ($opt->fc eq 'off') {
@@ -408,7 +471,7 @@ for my $module (@FIG_Config::modules) {
     print $oh "git pull\n";
 }
 # Add the web directory if needed.
-if ($FIG_Config::web_dir && ! $ENV{KB_TOP}) {
+if ($FIG_Config::web_dir && ! $ENV{KB_TOP} && ! $opt->remoteweb) {
     print $oh "echo Pulling web directory\n";
     print $oh "cd $FIG_Config::web_dir\n";
     print $oh "git pull\n";
@@ -442,6 +505,7 @@ if ($opt->links) {
         print "$linksDest file created.\n";
     }
 }
+# We are done.
 print "All done.\n";
 # Display the user-env command syntax.
 if ($vanillaMode) {
