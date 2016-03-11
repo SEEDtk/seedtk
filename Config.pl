@@ -334,7 +334,7 @@ if ($opt->remoteweb) {
             while (! eof $ih) {
                 my $line = <$ih>;
                 if ($line =~ /^#!.+perl/) {
-                    print "#!$perl_loc\n";
+                    print $oh "#!$perl_loc\n";
                 } else {
                     print $line;
                 }
