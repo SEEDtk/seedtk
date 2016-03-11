@@ -307,12 +307,13 @@ if ($opt->remoteweb) {
     # CGI files as we go. This is pretty complicated. First, we need to know the perl location.
     my $perl_loc = `which perl`;
     # Now we pull the web project directly into the SEEDtk directory.
-    chdir $base_dir;
     my $webSource = "$base_dir/Web/Web";
     if (-f "$webSource/index.html") {
+        chdir "$base_dir/Web";
         print "Refreshing source web directory.\n";
         system("git", "pull");
     } else {
+        chdir $base_dir;
         print "Retrieving source web directory.\n";
         system("git", "clone", "$remote_base/Web.git");
     }
