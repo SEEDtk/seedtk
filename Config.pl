@@ -347,11 +347,11 @@ if ($opt->remoteweb) {
             print "Copying file $webItem.\n";
             File::Copy::Recursive::fcopy($itemPath, $destPath);
         }
-        # Copy the Links.html if needed.
-        if (! -f "$webRootDir/Links.html") {
-            print "Creating Links.html.\n";
-            File::Copy::Recursive::fcopy("$webSource/Links.htm", "$webRootDir/Links.html");
-        }
+    }
+    # Copy the Links.html if needed.
+    if (! -f "$webRootDir/Links.html") {
+        print "Creating Links.html.\n";
+        File::Copy::Recursive::fcopy("$webSource/Links.htm", "$webRootDir/Links.html");
     }
 }
 #If the FIG_Config write has NOT been turned off, then write the FIG_Config.
