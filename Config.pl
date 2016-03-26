@@ -116,9 +116,9 @@ Name of a directory in which to create a shadow FIG_Config for the kbase environ
 =item remoteWeb
 
 If specified, the web directory will be cleared and reloaded from GIT, then updated
-with an explicit PERL path in the shebang header. This is useful when the default PERL 
-will not work on the web. The resulting web directory cannot be refreshed from GIT 
-without destroying the site. Instead, it must be updated using this script. This option 
+with an explicit PERL path in the shebang header. This is useful when the default PERL
+will not work on the web. The resulting web directory cannot be refreshed from GIT
+without destroying the site. Instead, it must be updated using this script. This option
 is only for Unix. In Windows, the shebang line is not used.
 
 
@@ -163,14 +163,19 @@ if (defined $eclipseParm) {
         $eclipseParm = 'SEEDtk';
     }
 }
+# Get the directory this script is running in.
+my $base_dir = dirname(File::Spec->rel2abs(__FILE__));
+# Get into it.
+chdir $base_dir;
 # Compute the remote base directory.
 my $rstr = `git remote -v`;
 my($remote) = $rstr =~ /^origin\s+(\S+)/;
 my $remote_base = dirname($remote);
-# Get the base directory. For Unix, this is the project
+# Get the real base directory. For Unix, this is the project
 # directory. For vanilla mode, this is the project directory's
 # parent. We will also figure out the eclipse mode here.
-my ($base_dir, $vanillaMode, $projName, $dataParm, $webParm);
+
+my ($vanillaMode, $projName, $dataParm, $webParm);
 if ($ENV{KB_TOP}) {
     # Here we are in a Unix setup. The base directory has been
     # stored in the environment.
@@ -184,10 +189,6 @@ if ($ENV{KB_TOP}) {
     if ($ARGV[1]) {
         $webParm = File::Spec->rel2abs($ARGV[1]);
     }
-    # Get the directory this script is running in.
-    $base_dir = dirname(File::Spec->rel2abs(__FILE__));
-    # Get into it.
-    chdir $base_dir;
     # Fix Windows slash craziness.
     $base_dir =~ tr/\\/\//;
     # Check our directory name.
