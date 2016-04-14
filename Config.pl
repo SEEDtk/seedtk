@@ -355,6 +355,14 @@ if ($opt->remoteweb) {
         File::Copy::Recursive::fcopy("$webSource/lib/Links.html", "$webRootDir/Links.html") ||
             die "Could not copy links file: $!";
     }
+    # Insure we have a temp directory.
+    my $tmpDir = $FIG_Config::temp;
+    if (! -d $tmpDir) {
+        File::Copy::Recursive::pathmk($tmpDir);
+        if (! $winMode) {
+            chmod 0777, $tmpDir;
+        }
+    }
 }
 #If the FIG_Config write has NOT been turned off, then write the FIG_Config.
 if ($opt->fc eq 'off') {
