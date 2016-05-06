@@ -6,6 +6,7 @@ L<http://spades.bioinf.spbau.ru/release3.7.1/manual.html|here>.
 
 =head2 Installing SPAdes on the Mac
 
+
 Navigate to the C<packages> subdirectory of the SEEDtk project directory and run the following commands.
 
     curl http://spades.bioinf.spbau.ru/release3.7.1/SPAdes-3.7.1-Darwin.tar.gz -o SPAdes-3.7.1-Darwin.tar.gz
