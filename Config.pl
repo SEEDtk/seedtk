@@ -488,7 +488,7 @@ for my $module (@FIG_Config::modules) {
 }
 # Add the Alexa directory.
 print $oh "echo Pulling Alexa directory\n";
-print $oh "cd $modBaseDir/Alexa";
+print $oh "cd $modBaseDir/Alexa\n";
 print $oh "git pull\n";
 # Add the web directory if needed.
 if ($FIG_Config::web_dir && ! $ENV{KB_TOP} && ! $opt->remoteweb) {
