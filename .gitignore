@@ -2,7 +2,8 @@
 .DS_Store
 .localized
 /user-env.*
-/bin/
+/bin
+/bin/**
 /pull-all.sh
 /pull-all.cmd
 /packages/**
