@@ -670,10 +670,12 @@ sub WriteAllParams {
     my $packages = "$FIG_Config::proj/packages";
     my @toolDirs;
     if (opendir(my $dh, $packages)) {
-        @toolDirs = grep { substr($_,0,1) ne '.' && -d "$packages/$_/bin" } readdir($dh);
+        my @dirs = grep { substr($_,0,1) ne '.' && -d "$packages/$_" } readdir($dh);
+        @toolDirs = map { "$_/bin" } grep { -d "$packages/$_/bin" } @dirs;
+        push @toolDirs, grep { $_ =~ /^bin_/ && -f "$packages/$_/art_illumina" } @dirs;
     }
     Env::WriteLines($oh, "", "# list of tool directories",
-            "our \@tools = (" . join(", ", map { "'$projDir/packages/$_/bin'" } @toolDirs) .
+            "our \@tools = (" . join(", ", map { "'$projDir/packages/$_'" } @toolDirs) .
                     ");");
     # Now comes the Shrub configuration section.
     my $userdata = $opt->dbuser . "/" . ($opt->dbpass // '');
