@@ -671,6 +671,7 @@ sub WriteAllParams {
     my @toolDirs;
     if (opendir(my $dh, $packages)) {
         my @dirs = grep { substr($_,0,1) ne '.' && -d "$packages/$_" } readdir($dh);
+        print "Package directories found: " . join(", ", @dirs) . "\n";
         @toolDirs = map { "$_/bin" } grep { -d "$packages/$_/bin" } @dirs;
         push @toolDirs, grep { $_ =~ /^art_bin_/ && -f "$packages/$_/art_illumina" } @dirs;
     }
