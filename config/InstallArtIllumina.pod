@@ -11,9 +11,7 @@ Navigate to the C<packages> subdirectory of the SEEDtk project directory and run
     curl http://www.niehs.nih.gov/research/resources/assets/docs/artbingreatsmokymountains041716linux64tgz.tgz -o art_illumina.tgz
     tar -zxf art_illumina.tgz
 
-You will want to add the C</art_bin_GreatSmokyMountains/> subdirectory of C<packages> to the C<tools> list in
-your L<FIG_Config>. This puts art_illumina in the tool path. To test your installation, run the L<Config> script to
-reconfigure and re-source your environment, then execute
+To test your installation, run the L<Config> script to reconfigure and re-source your environment, then execute
 
     RunTool art_illumina --help
 
@@ -24,9 +22,7 @@ Navigate to the C<packages> subdirectory of the SEEDtk project directory and run
     curl http://www.niehs.nih.gov/research/resources/assets/docs/artbingreatsmokymountains041716macos64tgz.tgz -o art_illumina.tgz
     tar -zxf art_illumina.tgz
 
-You will want to add the C</art_bin_GreatSmokyMountains/> subdirectory of C<packages> to the C<tools> list in
-your L<FIG_Config>. This puts art_illumina in the tool path. To test your installation, run the L<Config> script to
-reconfigure and re-source your environment, then execute
+To test your installation, run the L<Config> script to reconfigure and re-source your environment, then execute
 
     RunTool art_illumina --help
 
