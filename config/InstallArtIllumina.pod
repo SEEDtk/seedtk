@@ -1,0 +1,110 @@
+=head1 Installing ART Illumina
+
+Art Illumina is a tool for generating synthetic metagenome reads from a FASTA file. The
+tool is available for Windows, Linux, and MAC. The main web site is 
+L<http://www.niehs.nih.gov/research/resources/software/biostatistics/art/>.
+
+=head2 Installing Art Illumina on Linux
+
+Navigate to the C<packages> subdirectory of the SEEDtk project directory and run the following commands.
+
+    curl http://www.niehs.nih.gov/research/resources/assets/docs/artbingreatsmokymountains041716linux64tgz.tgz -o art_illumina.tgz
+    tar -zxf art_illumina.tgz
+
+You will want to add the C</art_bin_GreatSmokyMountains/> subdirectory of C<packages> to the C<tools> list in
+your L<FIG_Config>. This puts art_illumina in the tool path. To test your installation, run the L<Config> script to
+reconfigure and re-source your environment, then execute
+
+    RunTool art_illumina --help
+
+=head2 Installing Art Illumina on the Mac
+
+Navigate to the C<packages> subdirectory of the SEEDtk project directory and run the following commands.
+
+    curl http://www.niehs.nih.gov/research/resources/assets/docs/artbingreatsmokymountains041716macos64tgz.tgz -o art_illumina.tgz
+    tar -zxf art_illumina.tgz
+
+You will want to add the C</art_bin_GreatSmokyMountains/> subdirectory of C<packages> to the C<tools> list in
+your L<FIG_Config>. This puts art_illumina in the tool path. To test your installation, run the L<Config> script to
+reconfigure and re-source your environment, then execute
+
+    RunTool art_illumina --help
+
+=head2 Installing Art_Illumina on Windows
+
+Download http://www.niehs.nih.gov/research/resources/assets/docs/artbingreatsmokymountains041716win64zip.zip and
+then open it in WinZIP. Unzip the C<art_illumina.exe> file and copy it into a directory on the path.
+
+=head2 Command-Line Options and Help
+
+    ====================ART====================
+             ART_Illumina (2008-2016)          
+          Q Version 2.5.1 (Apr 17, 2016)       
+     Contact: Weichun Huang <whduke@gmail.com> 
+    -------------------------------------------
+
+=head3 Usage
+
+ art_illumina [options] -ss <sequencing_system> -sam -i <seq_ref_file> -l <read_length> -f <fold_coverage> -o <outfile_prefix>
+ art_illumina [options] -ss <sequencing_system> -sam -i <seq_ref_file> -l <read_length> -c <num_reads_per_sequence> -o <outfile_prefix>
+ art_illumina [options] -ss <sequencing_system> -sam -i <seq_ref_file> -l <read_length> -f <fold_coverage> -m <mean_fragsize> -s <std_fragsize> -o <outfile_prefix>
+ art_illumina [options] -ss <sequencing_system> -sam -i <seq_ref_file> -l <read_length> -c <num_reads_per_sequence> -m <mean_fragsize> -s <std_fragsize> -o <outfile_prefix>
+
+=head3 Parameters
+
+  -1   --qprof1   the first-read quality profile
+  -2   --qprof2   the second-read quality profile
+  -amp --amplicon amplicon sequencing simulation
+  -c   --rcount   number of reads/read pairs to be generated per sequence/amplicon (not be used together with -f/--fcov)
+  -d   --id       the prefix identification tag for read ID
+  -ef  --errfree  indicate to generate the zero sequencing errors SAM file as well the regular one
+                  NOTE: the reads in the zero-error SAM file have the same alignment positions
+                  as those in the regular SAM file, but have no sequencing errors
+  -f   --fcov     the fold of read coverage to be simulated or number of reads/read pairs generated for each amplicon
+  -h   --help     print out usage information
+  -i   --in       the filename of input DNA/RNA reference
+  -ir  --insRate  the first-read insertion rate (default: 0.00009)
+  -ir2 --insRate2 the second-read insertion rate (default: 0.00015)
+  -dr  --delRate  the first-read deletion rate (default:  0.00011)
+  -dr2 --delRate2 the second-read deletion rate (default: 0.00023)
+  -l   --len      the length of reads to be simulated
+  -m   --mflen    the mean size of DNA/RNA fragments for paired-end simulations
+  -mp  --matepair indicate a mate-pair read simulation
+  -M  --cigarM    indicate to use CIGAR 'M' instead of '=/X' for alignment match/mismatch
+  -nf  --maskN    the cutoff frequency of 'N' in a window size of the read length for masking genomic regions
+                  NOTE: default: '-nf 1' to mask all regions with 'N'. Use '-nf 0' to turn off masking
+  -na  --noALN    do not output ALN alignment file
+  -o   --out      the prefix of output filename
+  -p   --paired   indicate a paired-end read simulation or to generate reads from both ends of amplicons
+                  NOTE: art will automatically switch to a mate-pair simulation if the given mean fragment size >= 2000
+  -q   --quiet    turn off end of run summary
+  -qL  --minQ     the minimum base quality score
+  -qU  --maxQ     the maxiumum base quality score
+  -qs  --qShift   the amount to shift every first-read quality score by 
+  -qs2 --qShift2  the amount to shift every second-read quality score by
+                  NOTE: For -qs/-qs2 option, a positive number will shift up quality scores (the max is 93) 
+                  that reduce substitution sequencing errors and a negative number will shift down 
+                  quality scores that increase sequencing errors. If shifting scores by x, the error
+                  rate will be 1/(10^(x/10)) of the default profile.
+  -rs  --rndSeed  the seed for random number generator (default: system time in second)
+                  NOTE: using a fixed seed to generate two identical datasets from different runs
+  -s   --sdev     the standard deviation of DNA/RNA fragment size for paired-end simulations.
+  -sam --samout   indicate to generate SAM alignment file
+  -sp  --sepProf  indicate to use separate quality profiles for different bases (ATGC)
+  -ss  --seqSys   The name of Illumina sequencing system of the built-in profile used for simulation
+       NOTE: sequencing system ID names are:
+            GA1 - GenomeAnalyzer I (36bp,44bp), GA2 - GenomeAnalyzer II (50bp, 75bp)
+           HS10 - HiSeq 1000 (100bp),          HS20 - HiSeq 2000 (100bp),      HS25 - HiSeq 2500 (125bp, 150bp)
+           HS10 - HiSeq 1000 (100bp),          HS20 - HiSeq 2000 (100bp),      HS25 - HiSeq 2500 (125bp, 150bp)
+           HSXn - HiSeqX PCR free (150bp),     HSXt - HiSeqX TruSeq (150bp),   MinS - MiniSeq TruSeq (50bp)
+           MSv1 - MiSeq v1 (250bp),            MSv3 - MiSeq v3 (250bp),        NS50 - NextSeq500 v2 (75bp)
+
+=head3 Notes
+
+ART by default selects a built-in quality score profile according to the read length specified for the run.
+
+For single-end simulation, ART requires input sequence file, outputfile prefix, read length, and read count/fold coverage.
+
+For paired-end simulation (except for amplicon sequencing), ART also requires the parameter values of
+the mean and standard deviation of DNA/RNA fragment lengths
+
