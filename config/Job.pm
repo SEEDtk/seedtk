@@ -112,7 +112,7 @@ The last comment about the job's progress and/or status.
 
 =head3 Create
 
-    my $pid = Job::Create($sessionDir, $name, $command, @parms);
+    my $statusFile = Job::Create($sessionDir, $name, $command, @parms);
 
 Create a new job.
 
@@ -136,7 +136,7 @@ A list of the job's parameters.
 
 =item RETURN
 
-Returns the process ID of the job created (on Windows) or 0 (on Unix/Mac).
+Returns the name of the status file created.
 
 =back
 
@@ -154,35 +154,29 @@ sub Create {
         my $uuidObj = Data::UUID->new;
         my $uuid = $uuidObj->create_str();
         # Compute the status file name.
-        my $statusFile = "$sessionDir/Job.$uuid.status";
+        $retVal = "$sessionDir/Job.$uuid.status";
         # Create the work directory.
         my $workDir = "$sessionDir/$uuid";
         if (! -d $workDir) {
             # Create the work directory.
             mkdir $workDir, 0777;
         }
-        print "Working directory is $workDir.\n";
-        print "Command found in $dir.\n";
         # Get the perl path.
         # Push the necessary communication parameters onto the parameter list.
-        my @finalParms = ("--uuid=$uuid", "--name=$name", "--workDir=$workDir", "--statusFile=$statusFile", @parms);
+        my @finalParms = ("--uuid=$uuid", "--name=$name", "--workDir=$workDir", "--statusFile=$retVal", @parms);
         # Create the job. The job itself will create the status file.
         if ($FIG_Config::win_mode) {
-            $retVal = system(1, 'perl', "$dir/$command.pl", @finalParms);
+            system(1, 'perl', "$dir/$command.pl", @finalParms);
         } else {
-            $retVal = fork;
-            if ($retVal) {
-                print "Process ID is $retVal.\n";
+            my $pid = fork;
+            if ($pid) {
+                # We are okay: the job started.
             } elsif (defined $retVal) {
                 exec("$FIG_Config::perl_path", "-I$FIG_Config::proj/config", "$dir/$command.pl", @finalParms)
                     || die "Failed to execute $command: $!";
             } else {
                 die "Could not create job for $command: $!";
             }
-#            my $rc = system(join(' ', "perl -I $FIG_Config::proj/config $dir/$command.pl", @finalParms, '&'));
-#            if ($rc) {
-#                print "Command failed with return value $rc.\n";
-#            }
         }
     }
     return $retVal;
@@ -573,10 +567,6 @@ sub UpdateStatus {
     my ($self, $newStatus, $comment) = @_;
     # Open and write the file.
     my $file = $self->{statusFile};
-    my $fileDir = dirname($file);
-    if (! -d $fileDir) {
-        die "Directory $fileDir not found.";
-    }
     if (open(my $oh, '>', $file)) {
         print $oh join("\t", $self->{taskName}, $self->{UUID}, $self->{pid}, $newStatus, $comment);
         close $oh;
