@@ -153,6 +153,7 @@ my ($opt, $usage) = describe_options('%o %c dataRootDirectory webRootDirectory',
         ["kbase=s", "kbase lib directory"],
         ["eclipse:s", "if specified, then we will set up for Eclipse"],
         ["remoteWeb", "if specified, the web directory will be configured as a remote web site (Unix only)"],
+        ["homeFix", "if specified, a root path of 'homes' will be changed to 'home' (Argonne kludge)"]
         );
 print "Retrieving current configuration.\n";
 # Compute the eclipse option.
@@ -166,6 +167,9 @@ if (defined $eclipseParm) {
 }
 # Get the directory this script is running in.
 my $base_dir = dirname(File::Spec->rel2abs(__FILE__));
+if ($opt->homefix) {
+    $base_dir =~ s#$/homes/#/home/#;
+}
 # Get into it.
 chdir $base_dir;
 # Compute the remote base directory.
