@@ -164,6 +164,7 @@ sub Create {
         print "Command found in $dir.\n";
         # Get the perl path.
         my $perlPath = $Config{perlPath};
+        print "Perl path is $perlPath.\n";
         # Push the necessary communication parameters onto the parameter list.
         my @finalParms = ("--uuid=$uuid", "--name=\"$name\"", "--workDir=\"$workDir\"", "--statusFile=\"$statusFile\"", @parms);
         # Create the job. The job itself will create the status file.
