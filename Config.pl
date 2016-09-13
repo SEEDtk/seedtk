@@ -168,8 +168,10 @@ if (defined $eclipseParm) {
 # Get the directory this script is running in.
 my $base_dir = dirname(File::Spec->rel2abs(__FILE__));
 if ($opt->homefix) {
-    $base_dir =~ s#$/homes/#/home/#;
+    $base_dir =~ s#/homes/#/home/#;
+    print "Fixing home directory.\n";
 }
+print "Base directory is $base_dir.\n";
 # Get into it.
 chdir $base_dir;
 # Compute the remote base directory.
