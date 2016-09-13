@@ -173,7 +173,7 @@ sub Create {
             if ($retVal) {
                 print "Process ID is $retVal.\n";
             } elsif (defined $retVal) {
-                exec("/usr/bin/env", "perl", "-I$FIG_Config::proj/config", "$dir/$command.pl", @finalParms)
+                exec("$FIG_Config::perl_path", "-I$FIG_Config::proj/config", "$dir/$command.pl", @finalParms)
                     || die "Failed to execute $command: $!";
             } else {
                 die "Could not create job for $command: $!";

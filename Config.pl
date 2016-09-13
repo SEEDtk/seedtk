@@ -26,6 +26,7 @@ use File::Path;
 use Getopt::Long::Descriptive;
 use XML::Writer;
 use IO::File;
+use Config;
 
 # We need to look inside the FIG_Config even though it is loaded at
 # run-time, so we will get lots of warnings about one-time variables.
@@ -424,24 +425,30 @@ BuildPaths($winMode, Data => $FIG_Config::data, qw(Global));
 if ($webRootDir) {
     my $weblib = "$FIG_Config::web_dir/lib";
     if (-d $weblib) {
-        # Yes. Create the web configuration file.
+        # Yes. Create the web configuration files.
         my $webConfig = "$weblib/Web_Config.pm";
+        my $jobConfig = "$projDir/config/Job_Config.pm";
         # Open the web configuration file for output.
-        if (! open(my $oh, ">$webConfig")) {
+        my ($oh1, $oh2);
+        if (! open(my $oh1, ">$webConfig")) {
             # Web system problems are considered warnings, not fatal errors.
             warn "Could not open web configuration file $webConfig: $!\n";
+        } elsif (! open(my $oh2, ">$jobConfig")) {
+            warn "Could not open background job configuration file $jobConfig: $!\n";
         } else {
-            # Write the file.
-            print $oh "\n";
-            print $oh "use lib\n";
-            print $oh "    '" .     join("',\n    '", @FIG_Config::libs) . "';\n";
-            print $oh "\n";
-            print $oh "use FIG_Config;\n";
-            print $oh "\n";
-            print $oh "1;\n";
-            # Close the file.
-            close $oh;
-            print "Web configuration file $webConfig created.\n";
+            # Write the files.
+            for my $oh ($oh1, $oh2) {
+                print $oh "\n";
+                print $oh "use lib\n";
+                print $oh "    '" .     join("',\n    '", @FIG_Config::libs) . "';\n";
+                print $oh "\n";
+                print $oh "use FIG_Config;\n";
+                print $oh "\n";
+                print $oh "1;\n";
+                # Close the file.
+                close $oh;
+            }
+            print "Web configuration files $webConfig and $jobConfig created.\n";
         }
     }
 }
@@ -650,6 +657,8 @@ sub WriteAllParams {
     Env::WriteParam($oh, 'location of global file directory', global => "$dataRootDir/Global", $kbase);
     Env::WriteParam($oh, 'default conserved domain search URL', ConservedDomainSearchURL => "http://maple.mcs.anl.gov:5600");
     Env::WriteParam($oh, 'Patric Data API URL', p3_data_api_url => '');
+    # Write the perl path. Note this is a forced override.
+    Env::WriteParam($oh, 'perl execution path', perl_path => $Config{perlpath}, 1);
     ## Put new non-Shrub parameters here.
     # Now we need to build our directory lists. We start with the module base directory.
     Env::WriteLines($oh, "", "# code module base directory",

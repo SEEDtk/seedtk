@@ -1,5 +1,6 @@
 /FIG_Config_old.pm
 /FIG_Config.pm
+/Job_Config.pm
 /*.vbs
 /logon.cmd
 /sync.txt
