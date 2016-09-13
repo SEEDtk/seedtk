@@ -20,6 +20,7 @@ package Job;
 
     use strict;
     use warnings;
+    use Config;
     use Data::UUID;
     use Getopt::Long::Descriptive;
     use FIG_Config;
@@ -161,6 +162,8 @@ sub Create {
         }
         print "Working directory is $workDir.\n";
         print "Command found in $dir.\n";
+        # Get the perl path.
+        my $perlPath = $Config{perlPath};
         # Push the necessary communication parameters onto the parameter list.
         my @finalParms = ("--uuid=$uuid", "--name=\"$name\"", "--workDir=\"$workDir\"", "--statusFile=\"$statusFile\"", @parms);
         # Create the job. The job itself will create the status file.
@@ -171,7 +174,7 @@ sub Create {
             if ($retVal) {
                 print "Process ID is $retVal.\n";
             } elsif (defined $retVal) {
-                exec('perl', "-I$FIG_Config::proj/config", "$dir/$command.pl", @finalParms)
+                exec("$perlPath/perl", "-I$FIG_Config::proj/config", "$dir/$command.pl", @finalParms)
                     || die "Failed to execute $command: $!";
             } else {
                 die "Could not create job for $command: $!";
