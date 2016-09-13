@@ -167,11 +167,6 @@ if (defined $eclipseParm) {
 }
 # Get the directory this script is running in.
 my $base_dir = dirname(File::Spec->rel2abs(__FILE__));
-if ($opt->homefix) {
-    $base_dir =~ s#/homes/#/home/#;
-    print "Fixing home directory.\n";
-}
-print "Base directory is $base_dir.\n";
 # Get into it.
 chdir $base_dir;
 # Compute the remote base directory.
@@ -205,6 +200,13 @@ if ($ENV{KB_TOP}) {
     } else {
         die "Configuration script not found in $projName.";
     }
+}
+if ($opt->homefix) {
+    $base_dir =~ s#/homes/#/home/#;
+    print "Fixing home directory.\n";
+}
+print "Base directory is $base_dir.\n";
+if (! $ENV{KB_TOP}) {
     # Denote this is vanilla mode.
     $vanillaMode = 1;
     # Do we need to bootstrap?
