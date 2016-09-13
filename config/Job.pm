@@ -25,6 +25,7 @@ package Job;
     use Getopt::Long::Descriptive;
     use FIG_Config;
     use File::Copy::Recursive;
+    use File::Basename;
 
 =head1 Web Job Management
 
@@ -572,6 +573,10 @@ sub UpdateStatus {
     my ($self, $newStatus, $comment) = @_;
     # Open and write the file.
     my $file = $self->{statusFile};
+    my $fileDir = dirname($file);
+    if (! -d $fileDir) {
+        die "Directory $fileDir not found.";
+    }
     if (open(my $oh, '>', $file)) {
         print $oh join("\t", $self->{taskName}, $self->{UUID}, $self->{pid}, $newStatus, $comment);
         close $oh;
