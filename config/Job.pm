@@ -163,8 +163,6 @@ sub Create {
         print "Working directory is $workDir.\n";
         print "Command found in $dir.\n";
         # Get the perl path.
-        my $perlPath = $Config{perlPath};
-        print "Perl path is $perlPath.\n";
         # Push the necessary communication parameters onto the parameter list.
         my @finalParms = ("--uuid=$uuid", "--name=\"$name\"", "--workDir=\"$workDir\"", "--statusFile=\"$statusFile\"", @parms);
         # Create the job. The job itself will create the status file.
@@ -175,7 +173,7 @@ sub Create {
             if ($retVal) {
                 print "Process ID is $retVal.\n";
             } elsif (defined $retVal) {
-                exec("$perlPath/perl", "-I$FIG_Config::proj/config", "$dir/$command.pl", @finalParms)
+                exec("/usr/bin/env", "perl", "-I$FIG_Config::proj/config", "$dir/$command.pl", @finalParms)
                     || die "Failed to execute $command: $!";
             } else {
                 die "Could not create job for $command: $!";
