@@ -571,11 +571,12 @@ Comment to place in the status file.
 sub UpdateStatus {
     my ($self, $newStatus, $comment) = @_;
     # Open and write the file.
-    if (open(my $oh, '>', $self->{statusFile})) {
+    my $file = $self->{statusFile};
+    if (open(my $oh, '>', $file)) {
         print $oh join("\t", $self->{taskName}, $self->{UUID}, $self->{pid}, $newStatus, $comment);
         close $oh;
     } else {
-        die "Job status file open failed: $!";
+        die "Job file $file open failed: $!";
     }
 }
 
