@@ -306,6 +306,14 @@ if (! defined $FIG_Config::web_dir) {
 } else {
     $webRootDir = $FIG_Config::web_dir;
 }
+# Insure we have the Alexa workspaces.
+my $alexaDir = $FIG_Config::alexa // "$dataRootDir/AlexaSpaces";
+if (! -d $alexaDir) {
+    File::Copy::Recursive::pathmk($alexaDir);
+    if (! $winMode) {
+        chmod 0777, $alexaDir;
+    }
+}
 # If this is a remote web situation, we need to re-create the web directory here.
 if ($opt->remoteweb) {
     if (! -d $webRootDir) {
@@ -392,7 +400,7 @@ if ($opt->fc eq 'off') {
     }
     # Write the FIG_Config.
     print "Writing configuration to $outputName.\n";
-    WriteAllParams($outputName, $modBaseDir, \%modules, $projDir, $dataRootDir, $webRootDir, $winMode, $opt);
+    WriteAllParams($outputName, $modBaseDir, \%modules, $projDir, $dataRootDir, $webRootDir, $alexaDir, $winMode, $opt);
     # Execute it to get the latest variable values.
     print "Reading back new configuration.\n";
     RunFigConfig($outputName);
@@ -406,7 +414,7 @@ if ($opt->fc eq 'off') {
             $kbModules{$module} = "$kbModBase/$module";
         }
         WriteAllParams($kbFigConfig, $kbModBase, \%kbModules, '/kb/module/SEEDtk', '/kb/module/SEEDtk/Data',
-                '', 0, $opt, 1);
+                '', '', 0, $opt, 1);
     }
 }
 # Are we setting up default data directories?
@@ -642,7 +650,7 @@ If TRUE, the file will be modified for KBase use.
 
 sub WriteAllParams {
     # Get the parameters.
-    my ($fig_config_name, $modBaseDir, $modules, $projDir, $dataRootDir, $webRootDir, $winMode, $opt, $kbase) = @_;
+    my ($fig_config_name, $modBaseDir, $modules, $projDir, $dataRootDir, $webRootDir, $alexaDir, $winMode, $opt, $kbase) = @_;
     # Open the FIG_Config for output.
     open(my $oh, ">$fig_config_name") || die "Could not open $fig_config_name: $!";
     # Write the initial lines.
@@ -657,6 +665,7 @@ sub WriteAllParams {
     if ($webRootDir) {
         Env::WriteParam($oh, 'directory for temporary files', temp => "$webRootDir/Tmp", $kbase);
         Env::WriteParam($oh, 'URL for the directory of temporary files', temp_url => 'http://fig.localhost/Tmp');
+        Env::WriteParam($oh, 'directory for Alexa workspaces', alexa => $alexaDir);
     }
     Env::WriteParam($oh, 'TRUE for windows mode', win_mode => ($winMode ? 1 : 0));
     Env::WriteParam($oh, 'source code project directory', proj => $projDir, $kbase);
