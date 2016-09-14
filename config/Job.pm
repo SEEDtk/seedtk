@@ -482,7 +482,6 @@ sub Fail {
 
 Denote that the job has finished.
 
-
 =over 4
 
 =item jobObject
@@ -501,6 +500,137 @@ sub Finish {
     my ($self, $comment) = @_;
     $self->UpdateStatus('completed', $comment);
 }
+
+=head3 StoreTable
+
+    $jobObject->StoreTable($name, $label, \@headers, \%data);
+
+Produce an output table in the session directory.
+
+=over 4
+
+=item name
+
+Name of the output table. This must be a single letter.
+
+=item label
+
+The label to give to the table.
+
+=item header
+
+Reference to a list of column names.
+
+=item data
+
+Reference to a hash mapping key values (first column) to list of data values (remaining columns).
+
+=back
+
+=cut
+
+sub StoreTable {
+    my ($self, $name, $label, $headers, $data) = @_;
+    # Get the output file name.
+    my $sessionDir = dirname($self->{statusFile});
+    my $tableName = "$sessionDir/$name.table";
+    my $labelName = "$tableName.lbl";
+    # Write the label.
+    open(my $lh, '>', $labelName) || die "Could not open label file for $name table: $!";
+    print $lh "$label\n";
+    close $lh;
+    # Write the headers.
+    open(my $oh, '>', $tableName) || die "Could not open $name table: $!";
+    print $oh join("\t", @$headers) . "\n";
+    # Loop through the data, writing it out.
+    for my $key (sort keys %$data) {
+        my $columns = $data->{$key};
+        print $oh join("\t", $key, @$columns) . "\n";
+    }
+    close $oh;
+} 
+
+=head3 StoreSet
+
+    $jobObject->StoreSet($name, $label, \@items);
+
+Produce an output set in the session directory.
+
+=over 4
+
+=item name
+
+Name of the output set. This must be a single letter.
+
+=item label
+
+The label to give to the set.
+
+=item items
+
+Reference to a list of item values.
+
+=back
+
+=cut
+
+sub StoreSet {
+    my ($self, $name, $label, $items) = @_;
+    # Get the output file name.
+    my $sessionDir = dirname($self->{statusFile});
+    my $setName = "$sessionDir/$name.set";
+    my $labelName = "$setName.lbl";
+    # Write the label.
+    open(my $lh, '>', $labelName) || die "Could not open label file for $name set: $!";
+    print $lh "$label\n";
+    close $lh;
+    # Write the items.
+    open(my $oh, '>', $setName) || die "Could not open $name set: $!";
+    # Loop through the data, writing it out.
+    for my $item (@$items) {
+        print $oh "$item\n";
+    }
+    close $oh;
+}
+
+=head3 ReadSet
+
+    my $itemList = $jobObject->ReadSet($setName);
+
+Read in the specified set from the session directory.
+
+=over 4
+
+=item setName
+
+Name of the set to read (must be a single letter).
+
+=item RETURN
+
+Returns a reference to a list of the items in the set.
+
+=back
+
+=cut
+
+sub ReadSet {
+    my ($self, $setName) = @_;
+    my @retVal;
+    # Get the input file name.
+    my $sessionDir = dirname($self->{statusFile});
+    my $fileName = "$sessionDir/$setName.set";
+    # Open the file and read it in.
+    open(my $ih, '<', $fileName) || die "Could not open set $setName: $!";
+    while (! eof $ih) {
+        my $line = <$ih>;
+        $line =~ s/[\r\n]+$//g;
+        push @retVal, $line;
+    }
+    # Return the list.
+    return \@retVal;
+
+}
+
 
 =head3 statusFile
 
