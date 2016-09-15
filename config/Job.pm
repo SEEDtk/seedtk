@@ -503,7 +503,7 @@ sub Finish {
 
 =head3 StoreTable
 
-    $jobObject->StoreTable($name, $label, \@headers, \%data);
+    $jobObject->StoreTable($name, $label, \@headers, \%data, \@keys);
 
 Produce an output table in the session directory.
 
@@ -523,14 +523,19 @@ Reference to a list of column names.
 
 =item data
 
-Reference to a hash mapping key values (first column) to list of data values (remaining columns).
+Reference to a hash mapping key values (first column) to list of data values (remaining columns) or
+a single data value (single remaining column).
+
+=item keys (optional)
+
+Reference to a list of keys to output. If omitted, all keys are output.
 
 =back
 
 =cut
 
 sub StoreTable {
-    my ($self, $name, $label, $headers, $data) = @_;
+    my ($self, $name, $label, $headers, $data, $keys) = @_;
     # Get the output file name.
     my $sessionDir = dirname($self->{statusFile});
     my $tableName = "$sessionDir/$name.table";
@@ -542,10 +547,17 @@ sub StoreTable {
     # Write the headers.
     open(my $oh, '>', $tableName) || die "Could not open $name table: $!";
     print $oh join("\t", @$headers) . "\n";
+    # Default the key list.
+    if (! $keys) {
+        $keys = [sort keys %$data];
+    }
     # Loop through the data, writing it out.
-    for my $key (sort keys %$data) {
+    for my $key (@$keys) {
         my $columns = $data->{$key};
-        print $oh join("\t", $key, @$columns) . "\n";
+        if (ref $columns eq 'ARRAY') {
+            $columns = join("\t", @$columns);
+        }
+        print $oh "$key\t$columns\n";
     }
     close $oh;
 } 
