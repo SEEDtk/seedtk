@@ -27,6 +27,7 @@ use Getopt::Long::Descriptive;
 use XML::Writer;
 use IO::File;
 use Config;
+use Cwd;
 
 # We need to look inside the FIG_Config even though it is loaded at
 # run-time, so we will get lots of warnings about one-time variables.
@@ -487,6 +488,11 @@ if ($vanillaMode) {
 } else {
     # For the alternate environment, we need to generate the Config script.
     SetupScript('Config.pl', "$projDir/bin", $projDir);
+    # Then we need to do a make.
+    my $oldDir = getcwd();
+    chdir $projDir;
+    system("make");
+    chdir $oldDir;
 }
 # Now we need to create the pull-all script.
 my $fileName = ($winMode ? "$projDir/pull-all.cmd" : "$projDir/bin/pull-all");
