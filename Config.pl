@@ -484,6 +484,9 @@ if ($vanillaMode) {
         # shell scripts.
         SetupCommands(\%modules, $opt);
     }
+} else {
+    # For the alternate environment, we need to generate the Config script.
+    SetupScript('Config.pl', "$projDir/bin", $projDir);
 }
 # Now we need to create the pull-all script.
 my $fileName = ($winMode ? "$projDir/pull-all.cmd" : "$projDir/bin/pull-all");
@@ -1279,5 +1282,7 @@ sub SetupScript {
     my $newMode = ($finfo[2] & 0777) | 0111;
     chmod $newMode, $fileName;
     # Denote we created this file.
-    $wrappers->{$binaryName} = 1;
+    if ($wrappers) {
+        $wrappers->{$binaryName} = 1;
+    }
 }
