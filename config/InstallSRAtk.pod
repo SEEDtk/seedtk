@@ -1,0 +1,14 @@
+=head1 Installing SRA Toolkit
+
+Go to L<https://www.ncbi.nlm.nih.gov/Traces/sra/?view=software> and follow the instructions for your system,
+unzipping the SRA toolkit directory into the B<SEEDtk/packages> sub-directory. Thus, for linux, if your SEEDtk
+project directory is C<~/SEEDtk> and the install file is named C<sratoolkit.current-centos_linux64.tar.gz>, you
+would use
+
+    tar -xzf sratoolkit.current-centos_linux64.tar.gz ~/SEEDtk/packages
+
+To test your installation, type
+
+    RunTool fastq-dump -X 5 -Z SRR390728
+
+and you should see five reads worth of FASTQ output.
