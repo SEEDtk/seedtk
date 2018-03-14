@@ -294,6 +294,9 @@ if (! defined $FIG_Config::data || $opt->newdata) {
         print "Creating $dataRootDir\n";
         File::Copy::Recursive::pathmk($dataRootDir) || die "Could not create $dataRootDir: $!";
     }
+    if (defined $FIG_Config::data) {
+        $FIG_Config::data = $dataRootDir;
+    }
 } else {
     $dataRootDir = $FIG_Config::data;
 }
