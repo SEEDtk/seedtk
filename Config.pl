@@ -123,6 +123,9 @@ will not work on the web. The resulting web directory cannot be refreshed from G
 without destroying the site. Instead, it must be updated using this script. This option
 is only for Unix. In Windows, the shebang line is not used.
 
+=item newData
+
+Change the data root directory to the value specified in the parameters even if one already exists.
 
 =back
 
@@ -154,7 +157,8 @@ my ($opt, $usage) = describe_options('%o %c dataRootDirectory webRootDirectory',
         ["kbase=s", "kbase lib directory"],
         ["eclipse:s", "if specified, then we will set up for Eclipse"],
         ["remoteWeb", "if specified, the web directory will be configured as a remote web site (Unix only)"],
-        ["homeFix", "if specified, a root path of 'homes' will be changed to 'home' (Argonne kludge)"]
+        ["homeFix", "if specified, a root path of 'homes' will be changed to 'home' (Argonne kludge)"],
+        ["newData", "if specified, the current data root directory will be overridden by the parameter"]
         );
 print "Retrieving current configuration.\n";
 # Compute the eclipse option.
@@ -282,7 +286,7 @@ if (! defined $FIG_Config::data && $FIG_Config::shrub_dir) {
 }
 # Make sure we have the data directory if there is no data root
 # in the command-line parameters.
-if (! defined $FIG_Config::data) {
+if (! defined $FIG_Config::data || $opt->newdata) {
     $dataRootDir = FixPath($ARGV[0]);
     if (! defined $dataRootDir) {
         die "A data root directory is required if no current value exists in FIG_Config.";
