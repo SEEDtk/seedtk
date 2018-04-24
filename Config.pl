@@ -683,6 +683,7 @@ sub WriteAllParams {
     Env::WriteParam($oh, 'location of global file directory', global => "$dataRootDir/Global", $kbase);
     Env::WriteParam($oh, 'default conserved domain search URL', ConservedDomainSearchURL => "http://maple.mcs.anl.gov:5600");
     Env::WriteParam($oh, 'Patric Data API URL', p3_data_api_url => '');
+    Env::WriteParam($oh, 'user home directory', userHome => ($ENV{HOME} || $ENV{HOMEPATH}));
     # Write the perl path. Note this is a forced override.
     Env::WriteParam($oh, 'perl execution path', perl_path => $Config{perlpath}, 1);
     ## Put new non-Shrub parameters here.
