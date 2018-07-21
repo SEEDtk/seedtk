@@ -771,6 +771,10 @@ sub WriteAllParams {
                     "unless (\$ENV{PATHEXT} =~ /\.pl/i) {",
                     "    \$ENV{PATHEXT} .= ';.pl';",
                     "}");
+            Env::WriteLines($oh, "", "# Insure PYTHON is executable.",
+                    "unless (\$ENV{PATHEXT} =~ /\.py/i) {",
+                    "    \$ENV{PATHEXT} .= ';.py';",
+                    "}");
         }
     }
     if ($kbase) {
