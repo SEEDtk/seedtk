@@ -745,7 +745,7 @@ sub WriteAllParams {
     Env::WriteParam($oh, 'location of the DNA repository', shrub_dna => $dnaRepo, $kbase);
     # Next the sample repository. This is simpler.
     my $sampleRepo = "$dataRootDir/SampleRepo";
-    Env::WriteParam($oh, 'location of the Sample repository', shrub_sample => $sampleRepo);
+    Env::WriteParam($oh, 'location of the Sample repository (blank for none)', shrub_sample => $sampleRepo);
     ## Put new Shrub parameters here.
     if ($vanillaMode || $kbase) {
         # For a vanilla project or KBase, we need to convince FIG_Config to modify the path and the libpath.
