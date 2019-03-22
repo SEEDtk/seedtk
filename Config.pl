@@ -423,7 +423,7 @@ if ($opt->dirs) {
     # Yes. Insure we have the data paths.
     BuildPaths($winMode, Data => $FIG_Config::data, qw(Inputs Inputs/GenomeData Inputs/SubSystemData LoadFiles));
     # Are we using a local DNA repository?
-    if ($opt->dna ne 'none') {
+    if (! $opt->dna) {
         # Yes. Build that, too.
         BuildPaths($winMode, Data => $FIG_Config::data, qw(DnaRepo));
     }
@@ -519,9 +519,11 @@ for my $module (@FIG_Config::modules) {
     print $oh "git pull\n";
 }
 # Add the Alexa directory.
-print $oh "echo Pulling Alexa directory\n";
-print $oh "cd $modBaseDir/Alexa\n";
-print $oh "git pull\n";
+if (-d "$modBaseDir/Alexa") {
+	print $oh "echo Pulling Alexa directory\n";
+	print $oh "cd $modBaseDir/Alexa\n";
+	print $oh "git pull\n";
+}
 # Add the web directory if needed.
 if ($FIG_Config::web_dir && ! $ENV{KB_TOP} && ! $opt->remoteweb) {
     print $oh "echo Pulling web directory\n";
