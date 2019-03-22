@@ -7,6 +7,8 @@ would use
 
     tar -xzf sratoolkit.current-centos_linux64.tar.gz ~/SEEDtk/packages
 
+Add the C<bin> subdirectory to the B<tools> list in L<FIG_Config>.
+
 To test your installation, type
 
     RunTool fastq-dump -X 5 -Z SRR390728
