@@ -1142,7 +1142,7 @@ sub SetupBinaries {
         # Get the scripts for this module.
         my $scriptDir = "$modules->{$module}/scripts";
         opendir(my $dh, $scriptDir) || die "Could not open script directory $scriptDir: $!";
-        my @scripts = grep { $_ =~ /\.(?:pl|sh)$/i } readdir($dh);
+        my @scripts = grep { $_ =~ /\.(?:pl|sh|py)$/i } readdir($dh);
         closedir $dh;
         # Loop through them, creating the wrappers.
         for my $script (@scripts) {
@@ -1280,10 +1280,13 @@ sub SetupScript {
     open(my $oh, ">$fileName") || die "Could not open $binaryName: $!";
     print $oh "#!/usr/bin/env bash\n";
     if ($type eq 'pl') {
-            # For PERL, we ask perl to execute the file.
+        # For PERL, we ask perl to execute the file.
         print $oh "perl $scriptDir/$script \"\$\@\"\n";
+    } elsif ($type eq 'py') {
+    	# For PYTHON, we ask python to execute the file.
+    	print $oh "python $scriptDir/$script \"\$\@\"\n";
     } elsif ($type eq 'sh') {
-            # For bash, we execute the file directly. This requires updating permissions.
+        # For bash, we execute the file directly. This requires updating permissions.
         print $oh "$scriptDir/$script \"\$\@\"\n";
         chmod 0x755, "$scriptDir/$script";
     } else {
