@@ -34,10 +34,11 @@ use Cwd;
 no warnings qw(once);
 
 ## THIS CONSTANT DEFINES THE CORE MODULES
-use constant CORE => qw(utils ERDB kernel RASTtk tbltools);
+use constant CORE => qw(utils ERDB kernel p3_code RASTtk tbltools);
 
 ## THIS CONSTANT DEFINES MODULES WITH SPECIAL INCLUDE LISTS
-use constant INCLUDES => { utils => ['utils', 'RASTtk'], RASTtk => ['RASTtk', 'utils'] };
+use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code'], RASTtk => ['RASTtk', 'utils', 'p3_code'],
+                           p3_code => ['p3_code'] };
 
 =head1 Generate SEEDtk Configuration Files
 
@@ -438,6 +439,12 @@ if (! -d $FIG_Config::global) {
     File::Path::make_path($FIG_Config::global)
 }
 BuildPaths($winMode, Data => $FIG_Config::data, qw(Global));
+# Insure we have the eval/binning directory path.
+if (! -d $FIG_Config::p3data) {
+    print "Creating $FIG_Config::p3data.\n";
+    File::Path::make_path($FIG_Config::p3data);
+}
+BuildPaths($winMode, Data => $FIG_Config::data, qw(P3Data));
 # Do we have a Web project?
 if ($webRootDir) {
     my $weblib = "$FIG_Config::web_dir/lib";
@@ -520,9 +527,9 @@ for my $module (@FIG_Config::modules) {
 }
 # Add the Alexa directory.
 if (-d "$modBaseDir/Alexa") {
-	print $oh "echo Pulling Alexa directory\n";
-	print $oh "cd $modBaseDir/Alexa\n";
-	print $oh "git pull\n";
+    print $oh "echo Pulling Alexa directory\n";
+    print $oh "cd $modBaseDir/Alexa\n";
+    print $oh "git pull\n";
 }
 # Add the web directory if needed.
 if ($FIG_Config::web_dir && ! $ENV{KB_TOP} && ! $opt->remoteweb) {
@@ -683,6 +690,7 @@ sub WriteAllParams {
     Env::WriteParam($oh, 'location of shared code', cvsroot => '');
     Env::WriteParam($oh, 'TRUE to switch to the data directory during setup', data_switch => 0);
     Env::WriteParam($oh, 'location of global file directory', global => "$dataRootDir/Global", $kbase);
+    Env::WriteParam($oh, 'location of eval/binning file directory', p3data => "$dataRootDir/P3Data", $kbase);
     Env::WriteParam($oh, 'default conserved domain search URL', ConservedDomainSearchURL => "http://maple.mcs.anl.gov:5600");
     Env::WriteParam($oh, 'Patric Data API URL', p3_data_api_url => '');
     Env::WriteParam($oh, 'user home directory', userHome => ($ENV{HOME} || $ENV{HOMEPATH}));
@@ -1283,8 +1291,8 @@ sub SetupScript {
         # For PERL, we ask perl to execute the file.
         print $oh "perl $scriptDir/$script \"\$\@\"\n";
     } elsif ($type eq 'py') {
-    	# For PYTHON, we ask python to execute the file.
-    	print $oh "python $scriptDir/$script \"\$\@\"\n";
+        # For PYTHON, we ask python to execute the file.
+        print $oh "python $scriptDir/$script \"\$\@\"\n";
     } elsif ($type eq 'sh') {
         # For bash, we execute the file directly. This requires updating permissions.
         print $oh "$scriptDir/$script \"\$\@\"\n";
