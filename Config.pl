@@ -502,7 +502,7 @@ if ($vanillaMode) {
     chdir $oldDir;
 }
 # Setup the java commands.
-SetupJava(\@FIG_Config::java, $modBaseDir, $projDir);
+SetupJava("$modules{kernel}/jars", $projDir);
 # Now we need to create the pull-all script.
 my $fileName = ($winMode ? "$projDir/pull-all.cmd" : "$projDir/bin/pull-all");
 open(my $oh, ">$fileName") || die "Could not open $fileName: $!";
@@ -1181,53 +1181,60 @@ sub SetupBinaries {
 
 =head3 SetupJava
 
-    SetupJava(\@java, $mod_base);
+    SetupJava($kernelBase, $projDir);
 
-Handle the java directories.  We must create commands for executing the jar targets.
+Handle the commands for executing the jar targets.
 
 =over 4
 
-=item java
+=item jarBase
 
-The list of java modules.
+The base directory for the jar files.
 
-=item mod_base
+=item projDir
 
-The base directory for all SEEDtk modules (including the Java modules).
+The SEEDtk project directory.
 
 =back
 
 =cut
 
 sub SetupJava {
-    my ($java, $mod_base, $projDir) = @_;
-    for my $javaDir (@$java) {
-        # Check for a jar file.
-        if (-f "$mod_base/$javaDir/$javaDir.jar") {
-            # We have one.  Get the java parms.
-            my $parms = "";
-            if (open(my $ph, '<', "$mod_base/$javaDir/jparms.txt")) {
-                $parms = <$ph>;
-                chomp $parms;
-                close $ph;
-            }
-            print "Building java command $javaDir.\n";
-            my $command = "java $parms -jar $mod_base/$javaDir/$javaDir.jar";
-            # Create the appropriate executable file.
-            if ($winMode) {
-                open(my $jh, '>', "$projDir/$javaDir.cmd") || die "Could not open $javaDir command file: $!";
-                print $jh "\@echo off\n";
-                print $jh "$command \%\*\n";
-                close $jh;
-            } else {
-                open(my $jh, '>', "$projDir/bin/$javaDir") || die "Could not open$javaDir command file: $!";
-                print $jh "$command \$\@\n";
-                close $jh;
-                chmod 0x755, "$projDir/bin/$javaDir";
+    my ($jarBase, $projDir) = @_;
+    if (opendir(my $dh, $jarBase)) {
+        # Find the jar files.
+        my @jars = grep { $_ =~ /\.jar$/ } readdir $dh;
+        closedir $dh;
+        for my $jarFile (@jars) {
+            # Extract the jar name.
+            if ($jarFile =~ /(.+)\.jar/) {
+                my $javaName = $1;
+                # Check for a parm file.
+                my $parms = "";
+                if (open(my $ph, '<', "$jarBase/$javaName.txt")) {
+                    $parms = <$ph>;
+                    chomp $parms;
+                    close $ph;
+                }
+                print "Building java command $javaName.\n";
+                my $command = "java $parms -jar $jarBase/$jarFile";
+                # Create the appropriate executable file.
+                if ($winMode) {
+                    open(my $jh, '>', "$projDir/$javaName.cmd") || die "Could not open $javaName command file: $!";
+                    print $jh "\@echo off\n";
+                    print $jh "$command \%\*\n";
+                    close $jh;
+                } else {
+                    open(my $jh, '>', "$projDir/bin/$javaName") || die "Could not open $javaName command file: $!";
+                    print $jh "$command \$\@\n";
+                    close $jh;
+                    chmod 0x755, "$projDir/bin/$javaName";
+                }
             }
         }
     }
 }
+
 =head3 SetupCommands
 
     SetupCommands(\%modules, $opt);
