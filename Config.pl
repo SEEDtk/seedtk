@@ -501,6 +501,8 @@ if ($vanillaMode) {
     system("make");
     chdir $oldDir;
 }
+# Setup the java commands.
+SetupJava(\@FIG_Config::java, $modBaseDir, $projDir);
 # Now we need to create the pull-all script.
 my $fileName = ($winMode ? "$projDir/pull-all.cmd" : "$projDir/bin/pull-all");
 open(my $oh, ">$fileName") || die "Could not open $fileName: $!";
@@ -529,6 +531,12 @@ for my $module (@FIG_Config::modules) {
 if (-d "$modBaseDir/Alexa") {
     print $oh "echo Pulling Alexa directory\n";
     print $oh "cd $modBaseDir/Alexa\n";
+    print $oh "git pull\n";
+}
+# Add the java directories.
+for my $javaDir (@FIG_Config::java) {
+    print $oh "echo Pulling java directory $javaDir\n";
+    print $oh "cd $modBaseDir/$javaDir\n";
     print $oh "git pull\n";
 }
 # Add the web directory if needed.
@@ -711,6 +719,8 @@ sub WriteAllParams {
             "our \@modules = qw(" . join(" ", @FIG_Config::modules) . ");",
             "", "# list of shared modules",
             "our \@shared = qw(" . join(" ", @FIG_Config::shared) . ");",
+            "", "# list of java modules",
+            "our \@java = qw(" . join(" ", @FIG_Config::java) . ");",
             );
     # Set up the tool directories.
     my $packages = "$FIG_Config::proj/packages";
@@ -1169,7 +1179,53 @@ sub SetupBinaries {
     }
 }
 
+=head3 SetupJava
 
+    SetupJava(\@java, $mod_base);
+
+Handle the java directories.  We must create commands for executing the jar targets.
+
+=over 4
+
+=item java
+
+The list of java modules.
+
+=item mod_base
+
+The base directory for all SEEDtk modules (including the Java modules).
+
+=back
+
+=cut
+
+sub SetupJava {
+    my ($java, $mod_base, $projDir) = @_;
+    for my $javaDir (@$java) {
+        # Check for a jar file.
+        if (-f "$mod_base/$javaDir/target/$javaDir.jar") {
+            # We have one.  Get the java parms.
+            my $parms = "";
+            if (open(my $ph, '<', "$mod_base/$javaDir/jparms.txt")) {
+                $parms = <$ph>;
+                chomp $parms;
+                close $ph;
+            }
+            my $command = "java $parms -jar $mod_base/$javaDir/target/$javaDir.jar";
+            # Create the appropriate executable file.
+            if ($winMode) {
+                open(my $jh, '>', "$projDir/$javaDir.cmd") || die "Could not open $javaDir command file: $!";
+                print $jh "$command \%\*\n";
+                close $jh;
+            } else {
+                open(my $jh, '>', "$projDir/bin/$javaDir") || die "Could not open$javaDir command file: $!";
+                print $jh "$command \$\@\n";
+                close $jh;
+                chmod 0x755, "$projDir/bin/$javaDir";
+            }
+        }
+    }
+}
 =head3 SetupCommands
 
     SetupCommands(\%modules, $opt);
