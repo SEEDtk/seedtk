@@ -1203,7 +1203,7 @@ sub SetupJava {
     my ($java, $mod_base, $projDir) = @_;
     for my $javaDir (@$java) {
         # Check for a jar file.
-        if (-f "$mod_base/$javaDir/target/$javaDir.jar") {
+        if (-f "$mod_base/$javaDir/$javaDir.jar") {
             # We have one.  Get the java parms.
             my $parms = "";
             if (open(my $ph, '<', "$mod_base/$javaDir/jparms.txt")) {
@@ -1211,10 +1211,12 @@ sub SetupJava {
                 chomp $parms;
                 close $ph;
             }
-            my $command = "java $parms -jar $mod_base/$javaDir/target/$javaDir.jar";
+            print "Building java command $javaDir.\n";
+            my $command = "java $parms -jar $mod_base/$javaDir/$javaDir.jar";
             # Create the appropriate executable file.
             if ($winMode) {
                 open(my $jh, '>', "$projDir/$javaDir.cmd") || die "Could not open $javaDir command file: $!";
+                print $jh "\@echo off\n";
                 print $jh "$command \%\*\n";
                 close $jh;
             } else {
@@ -1270,7 +1272,7 @@ sub SetupCommands {
             $outFile =~ s/\.sh$/.cmd/;
             open(my $oh, ">$scriptDir/$outFile") || die "Could not open output file $outFile: $!";
             # Turn off echoing.
-            print $oh "\@ECHO OFF\n";
+            print $oh "\@echo off\n";
             # Loop through the input.
             while (! eof $ih) {
                 my $line = <$ih>;
