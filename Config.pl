@@ -1217,7 +1217,7 @@ sub SetupJava {
                     close $ph;
                 }
                 print "Building java command $javaName.\n";
-                my $command = "java $parms -jar $jarBase/$jarFile";
+                my $command = "java $parms -Dlogback.configurationFile=$jarBase/logback.xml -jar $jarBase/$jarFile";
                 # Create the appropriate executable file.
                 if ($winMode) {
                     open(my $jh, '>', "$projDir/$javaName.cmd") || die "Could not open $javaName command file: $!";
