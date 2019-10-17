@@ -1361,7 +1361,7 @@ sub SetupScript {
     } elsif ($type eq 'sh') {
         # For bash, we execute the file directly. This requires updating permissions.
         print $oh "$scriptDir/$script \"\$\@\"\n";
-        chmod 0x755, "$scriptDir/$script";
+        chmod 0755, "$scriptDir/$script";
     } else {
         die "Invalid script suffix $type found in $scriptDir.\n";
     }
