@@ -34,11 +34,11 @@ use Cwd;
 no warnings qw(once);
 
 ## THIS CONSTANT DEFINES THE CORE MODULES
-use constant CORE => qw(utils ERDB kernel p3_code RASTtk tbltools);
+use constant CORE => qw(utils ERDB kernel p3_code p3_scripts RASTtk tbltools);
 
 ## THIS CONSTANT DEFINES MODULES WITH SPECIAL INCLUDE LISTS
-use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code'], RASTtk => ['RASTtk', 'utils', 'p3_code'],
-                           p3_code => ['p3_code'] };
+use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code'], RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_scripts'],
+                           p3_code => ['p3_code'], p3_script => ['p3_scripts', 'p3_code'] };
 
 =head1 Generate SEEDtk Configuration Files
 

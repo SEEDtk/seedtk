@@ -16,7 +16,7 @@ Run L<Config.pl> to update the directory pointers.
 Use
 
     curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/LATEST/ncbi-blast-2.2.30+-x64-linux.tar.gz >blast.tar.gz
-    InstallTools blast.tar.gz
+    InstallTool blast.tar.gz
     Config
     rm blast.tar.gz
 
