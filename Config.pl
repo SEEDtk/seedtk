@@ -34,11 +34,11 @@ use Cwd;
 no warnings qw(once);
 
 ## THIS CONSTANT DEFINES THE CORE MODULES
-use constant CORE => qw(utils ERDB kernel p3_code p3_scripts RASTtk tbltools);
+use constant CORE => qw(utils ERDB kernel p3_code p3_core p3_scripts RASTtk tbltools);
 
 ## THIS CONSTANT DEFINES MODULES WITH SPECIAL INCLUDE LISTS
-use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code'], RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_scripts'],
-                           p3_code => ['p3_code'], p3_script => ['p3_scripts', 'p3_code'] };
+use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core'], RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_core', 'p3_scripts'],
+                           p3_code => ['p3_code', 'p3_core'], p3_script => ['p3_scripts', 'p3_code', 'p3_core'], p3_core => ['p3_code', 'p3_core'] };
 
 =head1 Generate SEEDtk Configuration Files
 
@@ -1267,39 +1267,40 @@ sub SetupCommands {
     for my $module (keys %$modules) {
         # Get the scripts for this module.
         my $scriptDir = "$modules->{$module}/scripts";
-        opendir(my $dh, $scriptDir) || die "Could not open script directory $scriptDir: $!";
-        my @scripts = grep { $_ =~ /\.sh$/i } readdir($dh);
-        closedir $dh;
-        # Loop through the shell scripts found.
-        for my $script (@scripts) {
-            # Open this script for input.
-            open(my $ih, "<$scriptDir/$script") || die "Could not open script file $script: $!";
-            # Open the corresponding command file for output.
-            my $outFile = $script;
-            $outFile =~ s/\.sh$/.cmd/;
-            open(my $oh, ">$scriptDir/$outFile") || die "Could not open output file $outFile: $!";
-            # Turn off echoing.
-            print $oh "\@echo off\n";
-            # Loop through the input.
-            while (! eof $ih) {
-                my $line = <$ih>;
-                # Translate the continuation character.
-                if ($line =~ /(.+)\\$/) {
-                    $line = "$1^\n";
+        if (-d $scriptDir) {
+            opendir(my $dh, $scriptDir) || die "Could not open script directory $scriptDir: $!";
+            my @scripts = grep { $_ =~ /\.sh$/i } readdir($dh);
+            closedir $dh;
+            # Loop through the shell scripts found.
+            for my $script (@scripts) {
+                # Open this script for input.
+                open(my $ih, "<$scriptDir/$script") || die "Could not open script file $script: $!";
+                # Open the corresponding command file for output.
+                my $outFile = $script;
+                $outFile =~ s/\.sh$/.cmd/;
+                open(my $oh, ">$scriptDir/$outFile") || die "Could not open output file $outFile: $!";
+                # Turn off echoing.
+                print $oh "\@echo off\n";
+                # Loop through the input.
+                while (! eof $ih) {
+                    my $line = <$ih>;
+                    # Translate the continuation character.
+                    if ($line =~ /(.+)\\$/) {
+                        $line = "$1^\n";
+                    }
+                    # Translate variable markers.
+                    $line =~ s/\$(\d+)/%$1/g;
+                    $line =~ s/\$\@/%*/g;
+                    # Write the line.
+                    print $oh $line;
                 }
-                # Translate variable markers.
-                $line =~ s/\$(\d+)/%$1/g;
-                $line =~ s/\$\@/%*/g;
-                # Write the line.
-                print $oh $line;
+                # Close the output file.
+                close $oh;
+                print "Script $outFile created.\n";
             }
-            # Close the output file.
-            close $oh;
-            print "Script $outFile created.\n";
         }
     }
 }
-
 
 =head3 SetupCGIs
 
