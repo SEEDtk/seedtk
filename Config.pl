@@ -1159,16 +1159,18 @@ sub SetupBinaries {
     for my $module (keys %$modules) {
         # Get the scripts for this module.
         my $scriptDir = "$modules->{$module}/scripts";
-        opendir(my $dh, $scriptDir) || die "Could not open script directory $scriptDir: $!";
-        my @scripts = grep { $_ =~ /\.(?:pl|sh|py)$/i } readdir($dh);
-        closedir $dh;
-        # Loop through them, creating the wrappers.
-        for my $script (@scripts) {
-            SetupScript($script, $binDir, $scriptDir, \%wrappers);
+        if (-d $scriptDir) {
+            opendir(my $dh, $scriptDir) || die "Could not open script directory $scriptDir: $!";
+            my @scripts = grep { $_ =~ /\.(?:pl|sh|py)$/i } readdir($dh);
+            closedir $dh;
+            # Loop through them, creating the wrappers.
+            for my $script (@scripts) {
+                SetupScript($script, $binDir, $scriptDir, \%wrappers);
+            }
         }
-        # Create the Config script.
-        SetupScript('Config.pl', $binDir, $projDir, \%wrappers);
     }
+    # Create the Config script.
+    SetupScript('Config.pl', $binDir, $projDir, \%wrappers);
     # Now delete the obsolete wrappers.
     opendir(my $dh, $binDir) || die "Could not open binary directory $binDir: $!";
     my @badBins = grep { substr($_,0,1) ne '.' && -f "$binDir/$_" && ! $wrappers{$_} } readdir($dh);
