@@ -34,15 +34,14 @@ use Cwd;
 no warnings qw(once);
 
 ## THIS CONSTANT DEFINES THE CORE MODULES
-#  Note that p3_seed_server must be LAST.
-use constant CORE => qw(utils ERDB kernel p3_code p3_core p3_scripts RASTtk tbltools);
+use constant CORE => qw(utils ERDB kernel p3_code p3_core p3_scripts RASTtk tbltools seed_core);
 
 ## THIS CONSTANT DEFINES MODULES WITH SPECIAL INCLUDE LISTS
-use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core', 'p3_seed_server'],
-                           RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_core', 'p3_scripts', 'p3_seed_server'],
-                           p3_code => ['p3_code', 'p3_core', 'p3_seed_server'],
-                           p3_script => ['p3_scripts', 'p3_code', 'p3_core', 'p3_seed_server'],
-                           p3_core => ['p3_code', 'p3_core', 'p3_seed_server'] };
+use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core', 'seed_core'],
+                           RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_core', 'p3_scripts', 'seed_core'],
+                           p3_code => ['p3_code', 'p3_core', 'seed_core'],
+                           p3_script => ['p3_scripts', 'p3_code', 'p3_core', 'seed_core'],
+                           p3_core => ['p3_code', 'p3_core', 'seed_core'] };
 
 =head1 Generate SEEDtk Configuration Files
 
@@ -221,7 +220,7 @@ if (! $ENV{KB_TOP}) {
         # Yes. Clone everything.
         print "Check out from $remote_base\n";
         chdir $base_dir;
-        for my $module (CORE, 'p3_seed_server') {
+        for my $module (CORE) {
             my $url = "$remote_base/$module.git";
             print "Cloning $module from $url.\n";
             my $rc = system("git", "clone", $url);
@@ -267,9 +266,6 @@ for my $module (CORE) {
     if (! grep { $_ eq $module } @FIG_Config::modules) {
         unshift @FIG_Config::modules, $module;
     }
-}
-if (! grep { $_ eq 'p3_seed_server' } @FIG_Config::modules) {
-    push @FIG_Config::modules, 'p3_seed_server';
 }
 # This hash will map each module to its directory.
 my $modBaseDir = ($vanillaMode ? $base_dir : "$projDir/modules");
@@ -716,7 +712,7 @@ sub WriteAllParams {
     Env::WriteLines($oh, "", "# code module base directory",
             "our \$mod_base = '$modBaseDir';");
     # Now we set up the directory and module lists.
-    my @scripts = grep { $_ !~ /p3_seed_server/ && -d $_ } map { "$modules->{$_}/scripts" } @FIG_Config::modules;
+    my @scripts = map { "$modules->{$_}/scripts" } @FIG_Config::modules;
     my @libs = map { "$modules->{$_}/lib" } @FIG_Config::modules;
     Env::WriteLines($oh, "", "# list of script directories",
             "our \@scripts = ('" . join("', '", @scripts) . "');",
