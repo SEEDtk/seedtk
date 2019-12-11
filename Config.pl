@@ -34,11 +34,15 @@ use Cwd;
 no warnings qw(once);
 
 ## THIS CONSTANT DEFINES THE CORE MODULES
+#  Note that p3_seed_server must be LAST.
 use constant CORE => qw(utils ERDB kernel p3_code p3_core p3_scripts RASTtk tbltools);
 
 ## THIS CONSTANT DEFINES MODULES WITH SPECIAL INCLUDE LISTS
-use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core'], RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_core', 'p3_scripts'],
-                           p3_code => ['p3_code', 'p3_core'], p3_script => ['p3_scripts', 'p3_code', 'p3_core'], p3_core => ['p3_code', 'p3_core'] };
+use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core', 'p3_seed_server'],
+                           RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_core', 'p3_scripts', 'p3_seed_server'],
+                           p3_code => ['p3_code', 'p3_core', 'p3_seed_server'],
+                           p3_script => ['p3_scripts', 'p3_code', 'p3_core', 'p3_seed_server'],
+                           p3_core => ['p3_code', 'p3_core', 'p3_seed_server'] };
 
 =head1 Generate SEEDtk Configuration Files
 
@@ -217,7 +221,7 @@ if (! $ENV{KB_TOP}) {
         # Yes. Clone everything.
         print "Check out from $remote_base\n";
         chdir $base_dir;
-        for my $module (CORE) {
+        for my $module (CORE, 'p3_seed_server') {
             my $url = "$remote_base/$module.git";
             print "Cloning $module from $url.\n";
             my $rc = system("git", "clone", $url);
@@ -263,6 +267,9 @@ for my $module (CORE) {
     if (! grep { $_ eq $module } @FIG_Config::modules) {
         unshift @FIG_Config::modules, $module;
     }
+}
+if (! grep { $_ eq 'p3_seed_server' } @FIG_Config::modules) {
+	push @FIG_Config::modules, 'p3_seed_server';
 }
 # This hash will map each module to its directory.
 my $modBaseDir = ($vanillaMode ? $base_dir : "$projDir/modules");
