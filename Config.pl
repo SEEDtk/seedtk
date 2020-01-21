@@ -712,7 +712,7 @@ sub WriteAllParams {
     Env::WriteLines($oh, "", "# code module base directory",
             "our \$mod_base = '$modBaseDir';");
     # Now we set up the directory and module lists.
-    my @scripts = map { "$modules->{$_}/scripts" } @FIG_Config::modules;
+    my @scripts = grep { -d $_ } map { "$modules->{$_}/scripts" } @FIG_Config::modules;
     my @libs = map { "$modules->{$_}/lib" } @FIG_Config::modules;
     Env::WriteLines($oh, "", "# list of script directories",
             "our \@scripts = ('" . join("', '", @scripts) . "');",
