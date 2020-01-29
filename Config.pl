@@ -319,6 +319,14 @@ if (! -d $alexaDir) {
         chmod 0777, $alexaDir;
     }
 }
+# Update the GTO definition if we have a master copy.
+my $gSpecFile = "$modBaseDir/genome_annotation/GenomeAnnotation.spec";
+if (-s $gSpecFile) {
+    print "Updating GenomeAnnotation.spec.\n";
+    chdir "$modBaseDir/genome_annotation";
+    system("git", "pull");
+    File::Copy::Recursive::fcopy($gSpecFile, "$modBaseDir/kernel/lib");
+}
 # If this is a remote web situation, we need to re-create the web directory here.
 if ($opt->remoteweb) {
     if (! -d $webRootDir) {
