@@ -319,6 +319,14 @@ if (! -d $alexaDir) {
         chmod 0777, $alexaDir;
     }
 }
+# Insure we have the log directory.
+my $logDir = "$base_dir/logs";
+if (! -d $logDir) {
+    File::Copy::Recursive::pathmk($logDir);
+    if (! $winMode) {
+        chmod 0777, $logDir;
+    }
+}
 # Update the GTO definition if we have a master copy.
 my $gSpecFile = "$modBaseDir/genome_annotation/GenomeAnnotation.spec";
 if (-s $gSpecFile) {
@@ -1230,7 +1238,7 @@ sub SetupJava {
                     close $ph;
                 }
                 print "Building java command $javaName.\n";
-                my $command = "java $parms -Dlogback.configurationFile=$jarBase/logback.xml -jar $jarBase/$jarFile";
+                my $command = "java $parms -Dlogback.configurationFile=$jarBase/logback.xml -Dapplication.name=$javaName -jar $jarBase/$jarFile";
                 # Create the appropriate executable file.
                 if ($winMode) {
                     open(my $jh, '>', "$projDir/$javaName.cmd") || die "Could not open $javaName command file: $!";
