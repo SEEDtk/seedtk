@@ -320,7 +320,7 @@ if (! -d $alexaDir) {
     }
 }
 # Insure we have the log directory.
-my $logDir = "$base_dir/logs";
+my $logDir = "$dataRootDir/logs";
 if (! -d $logDir) {
     File::Copy::Recursive::pathmk($logDir);
     if (! $winMode) {
@@ -1238,7 +1238,7 @@ sub SetupJava {
                     close $ph;
                 }
                 print "Building java command $javaName.\n";
-                my $command = "java $parms -Dlogback.configurationFile=$jarBase/logback.xml -Dapplication.name=$javaName -jar $jarBase/$jarFile";
+                my $command = "java $parms -Dlogback.configurationFile=$jarBase/logback.xml -Dlogfile.name=$logDir/$javaName -jar $jarBase/$jarFile";
                 # Create the appropriate executable file.
                 if ($winMode) {
                     open(my $jh, '>', "$projDir/$javaName.cmd") || die "Could not open $javaName command file: $!";
