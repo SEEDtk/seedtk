@@ -1002,6 +1002,14 @@ sub WriteAllConfigs {
         print $oh "export STK_TYPE=Mac\n";
         print $oh "export SERVICE=SEEDtk\n";
     }
+    # Add the environment variable for the PATRIC Data API.
+    if ($FIG_Config::p3_data_api_url) {
+        if ($winMode) {
+            print $oh "SET P3API_URL=$FIG_Config::p3_data_api_url\n";
+        } else {
+            print $oh "export P3API_URL=$FIG_Config::p3_data_api_url\n";
+        }
+    }
     # If the user wants a data directory switch, put it here.
     if ($FIG_Config::data_switch) {
         print $oh "cd $FIG_Config::data\n";
