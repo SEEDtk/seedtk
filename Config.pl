@@ -788,7 +788,7 @@ sub WriteAllParams {
     ## Put new Shrub parameters here.
     if ($vanillaMode || $kbase) {
         # For a vanilla project or KBase, we need to convince FIG_Config to modify the path and the libpath.
-        my @paths = ($winMode ? (@scripts) : "$FIG_Config::proj/bin");
+        my @paths = ($winMode ? ($projDir, @scripts) : "$FIG_Config::proj/bin");
         GeneratePathFix($oh, $winMode, scripts => 'PATH', @paths);
         # Do the same with PERL5LIB.
         GeneratePathFix($oh, $winMode, libraries => 'PERL5LIB', @libs, "$FIG_Config::proj/config");
