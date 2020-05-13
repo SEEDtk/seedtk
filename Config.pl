@@ -1011,14 +1011,15 @@ sub WriteAllConfigs {
         }
     }
     # Add the BLAST path.
-    opendir(my $dh, "$projDir/packages") || die "Could not open packages directory: $!";
-    my @subDir = grep { -s "$projDir/packages/$_/bin/blastp" } readdir $dh;
-    closedir $dh;
-    if (@subDir) {
-        if ($winMode) {
-            print $oh "SET BLAST_PATH=$projDir/packages/$subDir[0]/bin\n";
-        } else {
-            print $oh "export BLAST_PATH=$projDir/packages/$subDir[0]/bin\n";
+    if (! $ENV{BLAST_PATH} && opendir(my $dh, "$projDir/packages")) {
+        my @subDir = grep { -s "$projDir/packages/$_/bin/blastp" } readdir $dh;
+        closedir $dh;
+        if (@subDir) {
+            if ($winMode) {
+                print $oh "SET BLAST_PATH=$projDir/packages/$subDir[0]/bin\n";
+            } else {
+                print $oh "export BLAST_PATH=$projDir/packages/$subDir[0]/bin\n";
+            }
         }
     }
     # If the user wants a data directory switch, put it here.
