@@ -40,7 +40,7 @@ use constant CORE => qw(utils ERDB kernel p3_code p3_core p3_scripts RASTtk tblt
 use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core', 'seed_core'],
                            RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_core', 'p3_scripts', 'seed_core'],
                            p3_code => ['p3_code', 'p3_core', 'seed_core'],
-                           p3_script => ['p3_scripts', 'p3_code', 'p3_core', 'seed_core'],
+                           p3_scripts => ['p3_scripts', 'p3_code', 'p3_core', 'seed_core'],
                            p3_core => ['p3_code', 'p3_core', 'seed_core'] };
 
 =head1 Generate SEEDtk Configuration Files
