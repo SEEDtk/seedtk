@@ -1193,7 +1193,7 @@ sub SetupBinaries {
     }
     # This will contain a list of the wrappers we create. We prime it with our system
     # script names.
-    my %wrappers = ('pull-all' => 1);
+    my %wrappers = ('pull-all' => 1, 'run_plack' => 1);
     # Loop through the modules.
     for my $module (keys %$modules) {
         # Get the scripts for this module.
