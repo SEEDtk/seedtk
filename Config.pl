@@ -1022,6 +1022,14 @@ sub WriteAllConfigs {
             }
         }
     }
+    # Add the CLUSTAL PATH
+    if (! $ENV{CLUSTAL_PATH} && -s "$projDir/packages/clustalo") {
+        if ($winMode) {
+                print $oh "SET CLUSTAL_PATH=$projDir/packages\n";
+            } else {
+                print $oh "export CLUSTAL_PATH=$projDir/packages\n";
+        }
+    }
     # If the user wants a data directory switch, put it here.
     if ($FIG_Config::data_switch) {
         print $oh "cd $FIG_Config::data\n";
