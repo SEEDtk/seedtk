@@ -43,6 +43,10 @@ use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core', 's
                            p3_scripts => ['p3_scripts', 'p3_code', 'p3_core', 'seed_core'],
                            p3_core => ['p3_code', 'p3_core', 'seed_core'] };
 
+## THIS CONSTANT DEFINES EXTERNAL MODULES
+
+use constant EXTERNALS => { seed_core => 1 };
+
 =head1 Generate SEEDtk Configuration Files
 
     Config [ options ] dataDirectory webDirectory
@@ -1047,29 +1051,31 @@ sub WriteAllConfigs {
         # hash specifies the exceptions.
         print "Writing includepath files.\n";
         for my $module (keys %$modules) {
-            my $mh = IO::File->new(">$modules->{$module}/.includepath") ||
-                    die "Could not open Eclipse includepath file for $module: $!";
-            my $xmlOut = XML::Writer->new(OUTPUT => $mh, DATA_MODE => 1, DATA_INDENT => 4);
-            $xmlOut->xmlDecl("UTF-8");
-            # The main tag enclosing all others is "includepath".
-            $xmlOut->startTag("includepath");
-            # Determine the list of libraries.
-            my $libList;
-            if (INCLUDES->{$module}) {
-                $libList = INCLUDES->{$module};
-            } else {
-                $libList = \@FIG_Config::modules;
+            if (! EXTERNALS->{$module}) {
+                my $mh = IO::File->new(">$modules->{$module}/.includepath") ||
+                        die "Could not open Eclipse includepath file for $module: $!";
+                my $xmlOut = XML::Writer->new(OUTPUT => $mh, DATA_MODE => 1, DATA_INDENT => 4);
+                $xmlOut->xmlDecl("UTF-8");
+                # The main tag enclosing all others is "includepath".
+                $xmlOut->startTag("includepath");
+                # Determine the list of libraries.
+                my $libList;
+                if (INCLUDES->{$module}) {
+                    $libList = INCLUDES->{$module};
+                } else {
+                    $libList = \@FIG_Config::modules;
+                }
+                # Include the project directory for FIG_Config.
+                $xmlOut->emptyTag('includepathentry', path => File::Spec->rel2abs("$projDir/config"));
+                # Loop through the paths, generating includepathentry tags.
+                for my $lib (@$libList) {
+                    $xmlOut->emptyTag('includepathentry', path => File::Spec->rel2abs("$modules->{$lib}/lib"));
+                }
+                # Close the main tag.
+                $xmlOut->endTag("includepath");
+                # Close the document.
+                $xmlOut->end();
             }
-            # Include the project directory for FIG_Config.
-            $xmlOut->emptyTag('includepathentry', path => File::Spec->rel2abs("$projDir/config"));
-            # Loop through the paths, generating includepathentry tags.
-            for my $lib (@$libList) {
-                $xmlOut->emptyTag('includepathentry', path => File::Spec->rel2abs("$modules->{$lib}/lib"));
-            }
-            # Close the main tag.
-            $xmlOut->endTag("includepath");
-            # Close the document.
-            $xmlOut->end();
         }
     }
 }
