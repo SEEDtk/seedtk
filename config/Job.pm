@@ -23,6 +23,8 @@ package Job;
     use Config;
     use Data::UUID;
     use Getopt::Long::Descriptive;
+    use FindBin 1.51 qw( $RealBin );
+    use lib $RealBin;
     use FIG_Config;
     use File::Copy::Recursive;
     use File::Basename;
@@ -560,7 +562,7 @@ sub StoreTable {
         print $oh "$key\t$columns\n";
     }
     close $oh;
-} 
+}
 
 =head3 StoreSet
 
