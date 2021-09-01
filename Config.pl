@@ -1098,14 +1098,16 @@ sub WriteAllConfigs {
                 } else {
                     $libList = \@FIG_Config::modules;
                 }
-                if (DEV_MODS->{$module}) {
-                    push @$libList, @$devList;
-                }
                 # Include the project directory for FIG_Config.
                 $xmlOut->emptyTag('includepathentry', path => File::Spec->rel2abs("$projDir/config"));
                 # Loop through the paths, generating includepathentry tags.
                 for my $lib (@$libList) {
                     $xmlOut->emptyTag('includepathentry', path => File::Spec->rel2abs("$modules->{$lib}/lib"));
+                }
+                if (DEV_MODS->{$module}) {
+                    for my $lib (@$devList) {
+                        $xmlOut->emptyTag('includepathentry', path => File::Spec->rel2abs($lib));
+                    }
                 }
                 # Close the main tag.
                 $xmlOut->endTag("includepath");
