@@ -1,0 +1,1555 @@
+package Bio::KBase::AppService::Client;
+
+use POSIX;
+use strict;
+use Data::Dumper;
+use URI;
+
+my $get_time = sub { time, 0 };
+eval {
+    require Time::HiRes;
+    $get_time = sub { Time::HiRes::gettimeofday() };
+};
+
+use P3AuthToken;
+
+
+=head1 NAME
+
+Bio::KBase::AppService::Client
+
+=head1 DESCRIPTION
+
+
+
+
+
+=cut
+
+
+sub new
+{
+    my($class, $url, @args) = @_;
+    
+    if (!defined($url))
+    {
+	$url = 'https://p3.theseed.org/services/app_service';
+    }
+
+    my $self = {
+	client => Bio::KBase::AppService::Client::RpcClient->new,
+	url => $url,
+	headers => [],
+    };
+
+    chomp($self->{hostname} = `hostname`);
+    $self->{hostname} ||= 'unknown-host';
+
+    #
+    # Set up for propagating KBRPC_TAG and KBRPC_METADATA environment variables through
+    # to invoked services. If these values are not set, we create a new tag
+    # and a metadata field with basic information about the invoking script.
+    #
+    if ($ENV{KBRPC_TAG})
+    {
+	$self->{kbrpc_tag} = $ENV{KBRPC_TAG};
+    }
+    else
+    {
+	my ($t, $us) = &$get_time();
+	$us = sprintf("%06d", $us);
+	my $ts = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
+	$self->{kbrpc_tag} = "C:$0:$self->{hostname}:$$:$ts";
+    }
+    push(@{$self->{headers}}, 'Kbrpc-Tag', $self->{kbrpc_tag});
+
+    if ($ENV{KBRPC_METADATA})
+    {
+	$self->{kbrpc_metadata} = $ENV{KBRPC_METADATA};
+	push(@{$self->{headers}}, 'Kbrpc-Metadata', $self->{kbrpc_metadata});
+    }
+
+    if ($ENV{KBRPC_ERROR_DEST})
+    {
+	$self->{kbrpc_error_dest} = $ENV{KBRPC_ERROR_DEST};
+	push(@{$self->{headers}}, 'Kbrpc-Errordest', $self->{kbrpc_error_dest});
+    }
+
+    #
+    # This module requires authentication.
+    #
+    # We create an auth token, passing through the arguments that we were (hopefully) given.
+
+    {
+	my $token = P3AuthToken->new(@args);
+	
+	if (my $token_str = $token->token())
+	{
+	    $self->{token} = $token_str;
+	    $self->{client}->{token} = $token_str;
+	}
+        else
+        {
+	    #
+	    # All methods in this module require authentication. In this case, if we
+	    # don't have a token, we can't continue.
+	    #
+	    die "Authentication failed\n";
+	}
+    }
+
+    my $ua = $self->{client}->ua;	 
+    my $timeout = $ENV{CDMI_TIMEOUT} || (30 * 60);	 
+    $ua->timeout($timeout);
+    $ua->agent("Bio::KBase::AppService::Client UserAgent");
+    bless $self, $class;
+    return $self;
+}
+
+
+
+
+=head2 service_status
+
+  $return = $obj->service_status()
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$return is a reference to a list containing 2 items:
+	0: (submission_enabled) an int
+	1: (status_message) a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$return is a reference to a list containing 2 items:
+	0: (submission_enabled) an int
+	1: (status_message) a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub service_status
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 0)
+    {
+        die "Invalid argument count for function service_status (received $n, expecting 0)";
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.service_status",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking service_status:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method service_status: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+=head2 enumerate_apps
+
+  $return = $obj->enumerate_apps()
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$return is a reference to a list where each element is an App
+App is a reference to a hash where the following keys are defined:
+	id has a value which is an app_id
+	script has a value which is a string
+	label has a value which is a string
+	description has a value which is a string
+	parameters has a value which is a reference to a list where each element is an AppParameter
+app_id is a string
+AppParameter is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	label has a value which is a string
+	required has a value which is an int
+	default has a value which is a string
+	desc has a value which is a string
+	type has a value which is a string
+	enum has a value which is a string
+	wstype has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$return is a reference to a list where each element is an App
+App is a reference to a hash where the following keys are defined:
+	id has a value which is an app_id
+	script has a value which is a string
+	label has a value which is a string
+	description has a value which is a string
+	parameters has a value which is a reference to a list where each element is an AppParameter
+app_id is a string
+AppParameter is a reference to a hash where the following keys are defined:
+	id has a value which is a string
+	label has a value which is a string
+	required has a value which is an int
+	default has a value which is a string
+	desc has a value which is a string
+	type has a value which is a string
+	enum has a value which is a string
+	wstype has a value which is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub enumerate_apps
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 0)
+    {
+        die "Invalid argument count for function enumerate_apps (received $n, expecting 0)";
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.enumerate_apps",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking enumerate_apps:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method enumerate_apps: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+=head2 start_app
+
+  $task = $obj->start_app($app_id, $params, $workspace)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$app_id is an app_id
+$params is a task_parameters
+$workspace is a workspace_id
+$task is a Task
+app_id is a string
+task_parameters is a reference to a hash where the key is a string and the value is a string
+workspace_id is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a task_id
+	parent_id has a value which is a task_id
+	app has a value which is an app_id
+	workspace has a value which is a workspace_id
+	parameters has a value which is a task_parameters
+	user_id has a value which is a string
+	status has a value which is a task_status
+	awe_status has a value which is a task_status
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+task_id is a string
+task_status is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$app_id is an app_id
+$params is a task_parameters
+$workspace is a workspace_id
+$task is a Task
+app_id is a string
+task_parameters is a reference to a hash where the key is a string and the value is a string
+workspace_id is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a task_id
+	parent_id has a value which is a task_id
+	app has a value which is an app_id
+	workspace has a value which is a workspace_id
+	parameters has a value which is a task_parameters
+	user_id has a value which is a string
+	status has a value which is a task_status
+	awe_status has a value which is a task_status
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+task_id is a string
+task_status is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub start_app
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 3)
+    {
+        die "Invalid argument count for function start_app (received $n, expecting 3)";
+    }
+    {
+	my($app_id, $params, $workspace) = @args;
+
+	my @_bad_arguments;
+        (!ref($app_id)) or push(@_bad_arguments, "Invalid type for argument 1 \"app_id\" (value was \"$app_id\")");
+        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 2 \"params\" (value was \"$params\")");
+        (!ref($workspace)) or push(@_bad_arguments, "Invalid type for argument 3 \"workspace\" (value was \"$workspace\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to start_app:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    die $msg;
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.start_app",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking start_app:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method start_app: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+=head2 start_app2
+
+  $task = $obj->start_app2($app_id, $params, $start_params)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$app_id is an app_id
+$params is a task_parameters
+$start_params is a StartParams
+$task is a Task
+app_id is a string
+task_parameters is a reference to a hash where the key is a string and the value is a string
+StartParams is a reference to a hash where the following keys are defined:
+	parent_id has a value which is a task_id
+	workspace has a value which is a workspace_id
+task_id is a string
+workspace_id is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a task_id
+	parent_id has a value which is a task_id
+	app has a value which is an app_id
+	workspace has a value which is a workspace_id
+	parameters has a value which is a task_parameters
+	user_id has a value which is a string
+	status has a value which is a task_status
+	awe_status has a value which is a task_status
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+task_status is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$app_id is an app_id
+$params is a task_parameters
+$start_params is a StartParams
+$task is a Task
+app_id is a string
+task_parameters is a reference to a hash where the key is a string and the value is a string
+StartParams is a reference to a hash where the following keys are defined:
+	parent_id has a value which is a task_id
+	workspace has a value which is a workspace_id
+task_id is a string
+workspace_id is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a task_id
+	parent_id has a value which is a task_id
+	app has a value which is an app_id
+	workspace has a value which is a workspace_id
+	parameters has a value which is a task_parameters
+	user_id has a value which is a string
+	status has a value which is a task_status
+	awe_status has a value which is a task_status
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+task_status is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub start_app2
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 3)
+    {
+        die "Invalid argument count for function start_app2 (received $n, expecting 3)";
+    }
+    {
+	my($app_id, $params, $start_params) = @args;
+
+	my @_bad_arguments;
+        (!ref($app_id)) or push(@_bad_arguments, "Invalid type for argument 1 \"app_id\" (value was \"$app_id\")");
+        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 2 \"params\" (value was \"$params\")");
+        (ref($start_params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 3 \"start_params\" (value was \"$start_params\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to start_app2:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    die $msg;
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.start_app2",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking start_app2:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method start_app2: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+=head2 query_tasks
+
+  $tasks = $obj->query_tasks($task_ids)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$task_ids is a reference to a list where each element is a task_id
+$tasks is a reference to a hash where the key is a task_id and the value is a Task
+task_id is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a task_id
+	parent_id has a value which is a task_id
+	app has a value which is an app_id
+	workspace has a value which is a workspace_id
+	parameters has a value which is a task_parameters
+	user_id has a value which is a string
+	status has a value which is a task_status
+	awe_status has a value which is a task_status
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+app_id is a string
+workspace_id is a string
+task_parameters is a reference to a hash where the key is a string and the value is a string
+task_status is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$task_ids is a reference to a list where each element is a task_id
+$tasks is a reference to a hash where the key is a task_id and the value is a Task
+task_id is a string
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a task_id
+	parent_id has a value which is a task_id
+	app has a value which is an app_id
+	workspace has a value which is a workspace_id
+	parameters has a value which is a task_parameters
+	user_id has a value which is a string
+	status has a value which is a task_status
+	awe_status has a value which is a task_status
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+app_id is a string
+workspace_id is a string
+task_parameters is a reference to a hash where the key is a string and the value is a string
+task_status is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub query_tasks
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+        die "Invalid argument count for function query_tasks (received $n, expecting 1)";
+    }
+    {
+	my($task_ids) = @args;
+
+	my @_bad_arguments;
+        (ref($task_ids) eq 'ARRAY') or push(@_bad_arguments, "Invalid type for argument 1 \"task_ids\" (value was \"$task_ids\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to query_tasks:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    die $msg;
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.query_tasks",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking query_tasks:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method query_tasks: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+=head2 query_task_summary
+
+  $status = $obj->query_task_summary()
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$status is a reference to a hash where the key is a task_status and the value is an int
+task_status is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$status is a reference to a hash where the key is a task_status and the value is an int
+task_status is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub query_task_summary
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 0)
+    {
+        die "Invalid argument count for function query_task_summary (received $n, expecting 0)";
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.query_task_summary",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking query_task_summary:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method query_task_summary: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+=head2 query_task_details
+
+  $details = $obj->query_task_details($task_id)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$task_id is a task_id
+$details is a TaskDetails
+task_id is a string
+TaskDetails is a reference to a hash where the following keys are defined:
+	stdout_url has a value which is a string
+	stderr_url has a value which is a string
+	pid has a value which is an int
+	hostname has a value which is a string
+	exitcode has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+$task_id is a task_id
+$details is a TaskDetails
+task_id is a string
+TaskDetails is a reference to a hash where the following keys are defined:
+	stdout_url has a value which is a string
+	stderr_url has a value which is a string
+	pid has a value which is an int
+	hostname has a value which is a string
+	exitcode has a value which is an int
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub query_task_details
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+        die "Invalid argument count for function query_task_details (received $n, expecting 1)";
+    }
+    {
+	my($task_id) = @args;
+
+	my @_bad_arguments;
+        (!ref($task_id)) or push(@_bad_arguments, "Invalid type for argument 1 \"task_id\" (value was \"$task_id\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to query_task_details:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    die $msg;
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.query_task_details",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking query_task_details:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method query_task_details: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+=head2 enumerate_tasks
+
+  $return = $obj->enumerate_tasks($offset, $count)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$offset is an int
+$count is an int
+$return is a reference to a list where each element is a Task
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a task_id
+	parent_id has a value which is a task_id
+	app has a value which is an app_id
+	workspace has a value which is a workspace_id
+	parameters has a value which is a task_parameters
+	user_id has a value which is a string
+	status has a value which is a task_status
+	awe_status has a value which is a task_status
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+task_id is a string
+app_id is a string
+workspace_id is a string
+task_parameters is a reference to a hash where the key is a string and the value is a string
+task_status is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$offset is an int
+$count is an int
+$return is a reference to a list where each element is a Task
+Task is a reference to a hash where the following keys are defined:
+	id has a value which is a task_id
+	parent_id has a value which is a task_id
+	app has a value which is an app_id
+	workspace has a value which is a workspace_id
+	parameters has a value which is a task_parameters
+	user_id has a value which is a string
+	status has a value which is a task_status
+	awe_status has a value which is a task_status
+	submit_time has a value which is a string
+	start_time has a value which is a string
+	completed_time has a value which is a string
+	stdout_shock_node has a value which is a string
+	stderr_shock_node has a value which is a string
+task_id is a string
+app_id is a string
+workspace_id is a string
+task_parameters is a reference to a hash where the key is a string and the value is a string
+task_status is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub enumerate_tasks
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 2)
+    {
+        die "Invalid argument count for function enumerate_tasks (received $n, expecting 2)";
+    }
+    {
+	my($offset, $count) = @args;
+
+	my @_bad_arguments;
+        (!ref($offset)) or push(@_bad_arguments, "Invalid type for argument 1 \"offset\" (value was \"$offset\")");
+        (!ref($count)) or push(@_bad_arguments, "Invalid type for argument 2 \"count\" (value was \"$count\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to enumerate_tasks:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    die $msg;
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.enumerate_tasks",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking enumerate_tasks:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method enumerate_tasks: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+=head2 kill_task
+
+  $killed, $msg = $obj->kill_task($id)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$id is a task_id
+$killed is an int
+$msg is a string
+task_id is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$id is a task_id
+$killed is an int
+$msg is a string
+task_id is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub kill_task
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+        die "Invalid argument count for function kill_task (received $n, expecting 1)";
+    }
+    {
+	my($id) = @args;
+
+	my @_bad_arguments;
+        (!ref($id)) or push(@_bad_arguments, "Invalid type for argument 1 \"id\" (value was \"$id\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to kill_task:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    die $msg;
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.kill_task",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking kill_task:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method kill_task: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+=head2 rerun_task
+
+  $new_task = $obj->rerun_task($id)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$id is a task_id
+$new_task is a task_id
+task_id is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$id is a task_id
+$new_task is a task_id
+task_id is a string
+
+
+=end text
+
+=item Description
+
+
+
+=back
+
+=cut
+
+sub rerun_task
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+        die "Invalid argument count for function rerun_task (received $n, expecting 1)";
+    }
+    {
+	my($id) = @args;
+
+	my @_bad_arguments;
+        (!ref($id)) or push(@_bad_arguments, "Invalid type for argument 1 \"id\" (value was \"$id\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to rerun_task:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    die $msg;
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "AppService.rerun_task",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->{error}) {
+	    my $msg = $result->{error}->{error} || $result->{error}->{message};
+	    $msg =  $self->{client}->json->encode($msg) if ref($msg);
+	    die "Error $result->{error}->{code} invoking rerun_task:\n$msg\n";
+	} else {
+	    return wantarray ? @{$result->{result}} : $result->{result}->[0];
+	}
+    } else {
+	die "Error invoking method rerun_task: " .  $self->{client}->status_line;
+    }
+}
+
+
+
+
+
+=head1 TYPES
+
+
+
+=head2 task_id
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 app_id
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 workspace_id
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 task_parameters
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the key is a string and the value is a string
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the key is a string and the value is a string
+
+=end text
+
+=back
+
+
+
+=head2 AppParameter
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+label has a value which is a string
+required has a value which is an int
+default has a value which is a string
+desc has a value which is a string
+type has a value which is a string
+enum has a value which is a string
+wstype has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a string
+label has a value which is a string
+required has a value which is an int
+default has a value which is a string
+desc has a value which is a string
+type has a value which is a string
+enum has a value which is a string
+wstype has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 App
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is an app_id
+script has a value which is a string
+label has a value which is a string
+description has a value which is a string
+parameters has a value which is a reference to a list where each element is an AppParameter
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is an app_id
+script has a value which is a string
+label has a value which is a string
+description has a value which is a string
+parameters has a value which is a reference to a list where each element is an AppParameter
+
+
+=end text
+
+=back
+
+
+
+=head2 task_status
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 Task
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a task_id
+parent_id has a value which is a task_id
+app has a value which is an app_id
+workspace has a value which is a workspace_id
+parameters has a value which is a task_parameters
+user_id has a value which is a string
+status has a value which is a task_status
+awe_status has a value which is a task_status
+submit_time has a value which is a string
+start_time has a value which is a string
+completed_time has a value which is a string
+stdout_shock_node has a value which is a string
+stderr_shock_node has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a task_id
+parent_id has a value which is a task_id
+app has a value which is an app_id
+workspace has a value which is a workspace_id
+parameters has a value which is a task_parameters
+user_id has a value which is a string
+status has a value which is a task_status
+awe_status has a value which is a task_status
+submit_time has a value which is a string
+start_time has a value which is a string
+completed_time has a value which is a string
+stdout_shock_node has a value which is a string
+stderr_shock_node has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 TaskResult
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+id has a value which is a task_id
+app has a value which is an App
+parameters has a value which is a task_parameters
+start_time has a value which is a float
+end_time has a value which is a float
+elapsed_time has a value which is a float
+hostname has a value which is a string
+output_files has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+0: (output_path) a string
+1: (output_id) a string
+
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+id has a value which is a task_id
+app has a value which is an App
+parameters has a value which is a task_parameters
+start_time has a value which is a float
+end_time has a value which is a float
+elapsed_time has a value which is a float
+hostname has a value which is a string
+output_files has a value which is a reference to a list where each element is a reference to a list containing 2 items:
+0: (output_path) a string
+1: (output_id) a string
+
+
+
+=end text
+
+=back
+
+
+
+=head2 StartParams
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+parent_id has a value which is a task_id
+workspace has a value which is a workspace_id
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+parent_id has a value which is a task_id
+workspace has a value which is a workspace_id
+
+
+=end text
+
+=back
+
+
+
+=head2 TaskDetails
+
+=over 4
+
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+stdout_url has a value which is a string
+stderr_url has a value which is a string
+pid has a value which is an int
+hostname has a value which is a string
+exitcode has a value which is an int
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+stdout_url has a value which is a string
+stderr_url has a value which is a string
+pid has a value which is an int
+hostname has a value which is a string
+exitcode has a value which is an int
+
+
+=end text
+
+=back
+
+
+
+=cut
+
+package Bio::KBase::AppService::Client::RpcClient;
+use POSIX;
+use strict;
+use LWP::UserAgent;
+use JSON::XS;
+
+BEGIN {
+    for my $method (qw/uri ua json content_type version id allow_call status_line/) {
+	eval qq|
+	    sub $method {
+		\$_[0]->{$method} = \$_[1] if defined \$_[1];
+		\$_[0]->{$method};
+	    }
+	    |;
+	}
+    }
+
+sub new
+{
+    my($class) = @_;
+
+    my $ua = LWP::UserAgent->new();
+    my $json = JSON::XS->new->allow_nonref->utf8;
+    
+    my $self = {
+	ua => $ua,
+	json => $json,
+    };
+    return bless $self, $class;
+}
+
+sub call {
+    my ($self, $uri, $headers, $obj) = @_;
+    my $result;
+
+
+    {
+	if ($uri =~ /\?/) {
+	    $result = $self->_get($uri);
+	}
+	else {
+	    Carp::croak "not hashref." unless (ref $obj eq 'HASH');
+	    $result = $self->_post($uri, $headers, $obj);
+	}
+
+    }
+
+    my $service = $obj->{method} =~ /^system\./ if ( $obj );
+
+    $self->status_line($result->status_line);
+
+    if ($result->is_success || $result->content_type eq 'application/json') {
+
+	my $txt = $result->content;
+
+        return unless($txt); # notification?
+
+	my $obj = eval { $self->json->decode($txt); };
+
+	if (!$obj)
+	{
+	    die "Error parsing result: $@";
+	}
+
+	return $obj;
+    }
+    else {
+        return;
+    }
+}
+
+sub _get {
+    my ($self, $uri) = @_;
+    $self->ua->get(
+		   $uri,
+		   Accept         => 'application/json',
+		  );
+}
+
+sub _post {
+    my ($self, $uri, $headers, $obj) = @_;
+    my $json = $self->json;
+
+    $obj->{version} ||= $self->{version} || '1.1';
+
+    if ($obj->{version} eq '1.0') {
+        delete $obj->{version};
+        if (exists $obj->{id}) {
+            $self->id($obj->{id}) if ($obj->{id}); # if undef, it is notification.
+        }
+        else {
+            $obj->{id} = $self->id || ($self->id('JSON::RPC::Legacy::Client'));
+        }
+    }
+    else {
+        # $obj->{id} = $self->id if (defined $self->id);
+	# Assign a random number to the id if one hasn't been set
+	$obj->{id} = (defined $self->id) ? $self->id : substr(rand(),2);
+    }
+
+    my $content = $json->encode($obj);
+
+    $self->ua->post(
+        $uri,
+        Content_Type   => $self->{content_type},
+        Content        => $content,
+        Accept         => 'application/json',
+	@$headers,
+	($self->{token} ? (Authorization => $self->{token}) : ()),
+    );
+}
+
+
+
+1;

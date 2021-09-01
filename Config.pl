@@ -253,7 +253,12 @@ if (! $ENV{KB_TOP}) {
 my $userHome = $ENV{HOME};
 my $dev_base = "$userHome/dev_container/modules";
 if (! -d $dev_base) {
-    File::Copy::Recursive::pathmk($dev_base);
+    chdir $userHome;
+    my $url = "https://github.com/olsonanl/dev_container";
+    my $rc = system("git", "clone", $url);
+    if ($rc != 0) {
+        die "Error cloning $url\n";
+    }
 }
 chdir $dev_base;
 for my $module (keys %{DEV_CONTAINED()}) {
@@ -265,7 +270,6 @@ for my $module (keys %{DEV_CONTAINED()}) {
         }
     }
 }
-# Load the environment library.
 require Env;
 print "Analyzing directories.\n";
 # The root directories will be put in here.
@@ -275,6 +279,11 @@ my $projDir = ($vanillaMode ? join("/", $base_dir, $projName) : $base_dir);
 if (! -d "$projDir/config") {
     die "Project directory not found in $projDir.";
 }
+my $clientModule = "$dev_base/app_service/lib/Bio/KBase/AppService/Client.pm";
+if (! -f $clientModule) {
+    File::Copy::Recursive::fcopy("$projDir/Client.txt", $clientModule);
+}
+# Load the environment library.
 # Save the current environment, before it's been modified by FIG_Config.
 my %oldenv = %ENV;
 # Get the name of the real FIG_Config file (not the output file,
