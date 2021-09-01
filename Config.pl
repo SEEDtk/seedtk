@@ -43,8 +43,15 @@ use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core', 's
                            p3_scripts => ['p3_scripts', 'p3_code', 'p3_core', 'seed_core'],
                            p3_core => ['p3_code', 'p3_core', 'seed_core'] };
 
-## THIS CONSTANT DEFINES EXTERNAL MODULES
+## THIS CONSTANT DEFINES MODULES THAT RELY ON DEV_CONTAINER INCLUDES
+use constant DEV_MODS => { p3_scripts => 1 };
 
+## THIS CONSTANT DEFINED DEV_CONTAINER MODULES
+use constant DEV_CONTAINED => { app_service => 'https://github.com/PATRIC3/app_service',
+        p3_auth => 'https://github.com/PATRIC3/p3_auth',
+        Workspace => 'https://github.com/olsonanl/Workspace' };
+
+## THIS CONSTANT DEFINES EXTERNAL MODULES
 use constant EXTERNALS => { seed_core => 1 };
 
 =head1 Generate SEEDtk Configuration Files
@@ -130,7 +137,6 @@ with an explicit PERL path in the shebang header. This is useful when the defaul
 will not work on the web. The resulting web directory cannot be refreshed from GIT
 without destroying the site. Instead, it must be updated using this script. This option
 is only for Unix. In Windows, the shebang line is not used.
-
 
 =back
 
@@ -243,6 +249,22 @@ if (! $ENV{KB_TOP}) {
     # Get access to the utilities library.
     unshift @INC, $libDir;
 }
+# Establish the dev-container if it does not already exist.
+my $userHome = $ENV{HOME};
+my $dev_base = "$userHome/dev_container/modules";
+if (! -d $dev_base) {
+    File::Copy::Recursive::pathmk($dev_base);
+}
+chdir $dev_base;
+for my $module (keys %{DEV_CONTAINED()}) {
+    if (! -d "$dev_base/$module") {
+        my $url = DEV_CONTAINED->{$module};
+        my $rc = system("git", "clone", $url);
+        if ($rc != 0) {
+            die "Error cloning $url\n";
+        }
+    }
+}
 # Load the environment library.
 require Env;
 print "Analyzing directories.\n";
@@ -336,9 +358,11 @@ my $gSpecFile = "$modBaseDir/genome_annotation/GenomeAnnotation.spec";
 if (-s $gSpecFile) {
     print "Updating GenomeAnnotation.spec.\n";
     chdir "$modBaseDir/genome_annotation";
-    system("git", "pull");
+    system("git", "pull", "--ff-only");
     File::Copy::Recursive::fcopy($gSpecFile, "$modBaseDir/kernel/lib");
 }
+# Get the dev-container libraries and compute their locations.
+my $devList = [map { "$dev_base/$_/lib" } keys %{DEV_CONTAINED()}];
 # If this is a remote web situation, we need to re-create the web directory here.
 if ($opt->remoteweb) {
     if (! -d $webRootDir) {
@@ -354,7 +378,7 @@ if ($opt->remoteweb) {
     if (-f "$webSource/index.html") {
         chdir "$base_dir/Web";
         print "Refreshing source web directory.\n";
-        system("git", "pull");
+        system("git", "pull", "--ff-only");
     } else {
         chdir $base_dir;
         print "Retrieving source web directory.\n";
@@ -511,7 +535,7 @@ if ($vanillaMode) {
         # We also need to fix the CGI permissions.
         SetupCGIs($FIG_Config::web_dir, $opt);
     } else {
-        # For a vanilla Windows installation, we have to set up DOS-style version of the
+        # For a vanilla Windows installation, we have to set up DOS-style versions of the
         # shell scripts.
         SetupCommands(\%modules, $opt);
     }
@@ -544,29 +568,28 @@ if ($winMode) {
 # Now write the commands to run through the directories and pull.
 print $oh "echo Pulling project directory.\n";
 print $oh "pushd $projDirForPush\n";
-print $oh "git pull\n";
+print $oh "git pull --ff-only\n";
+for my $module (keys %{DEV_CONTAINED()}) {
+    print $oh "echo Pulling $module\n";
+    print $oh "cd $dev_base/$module\n";
+    print $oh "git pull --ff-only\n";
+}
 for my $module (@FIG_Config::modules) {
     print $oh "echo Pulling $module\n";
     print $oh "cd $modules{$module}\n";
-    print $oh "git pull\n";
-}
-# Add the Alexa directory.
-if (-d "$modBaseDir/Alexa") {
-    print $oh "echo Pulling Alexa directory\n";
-    print $oh "cd $modBaseDir/Alexa\n";
-    print $oh "git pull\n";
+    print $oh "git pull --ff-only\n";
 }
 # Add the java directories.
 for my $javaDir (@FIG_Config::java) {
     print $oh "echo Pulling java directory $javaDir\n";
     print $oh "cd $modBaseDir/$javaDir\n";
-    print $oh "git pull\n";
+    print $oh "git pull --ff-only\n";
 }
 # Add the web directory if needed.
 if ($FIG_Config::web_dir && ! $ENV{KB_TOP} && ! $opt->remoteweb) {
     print $oh "echo Pulling web directory\n";
     print $oh "cd $FIG_Config::web_dir\n";
-    print $oh "git pull\n";
+    print $oh "git pull --ff-only\n";
 }
 # Restore the old directory.
 print $oh "popd\n";
@@ -734,6 +757,7 @@ sub WriteAllParams {
     # Now we set up the directory and module lists.
     my @scripts = grep { -d $_ } map { "$modules->{$_}/scripts" } @FIG_Config::modules;
     my @libs = map { "$modules->{$_}/lib" } @FIG_Config::modules;
+    push @libs, @$devList;
     Env::WriteLines($oh, "", "# list of script directories",
             "our \@scripts = ('" . join("', '", @scripts) . "');",
             "",  "# list of PERL libraries",
@@ -809,7 +833,7 @@ sub WriteAllParams {
                 print "sudo ln -s /usr/local/$libdir/lib/libmysqlclient.18.dylib /usr/local/lib/libmysqlclient.18.dylib\n\n";
             }
         } elsif ($winMode) {
-            # On Windows, we need to upgrade that PATHEXT.
+            # On Windows, we need to upgrade the PATHEXT.
             Env::WriteLines($oh, "", "# Insure PERL is executable.",
                     "unless (\$ENV{PATHEXT} =~ /\.pl/i) {",
                     "    \$ENV{PATHEXT} .= ';.pl';",
@@ -1006,7 +1030,7 @@ sub WriteAllConfigs {
         print $oh "export STK_TYPE=Mac\n";
         print $oh "export SERVICE=SEEDtk\n";
     }
-    # Add the environment variable for the PATRIC Data API.
+    # Add the environment variables for the PATRIC Data API.
     if ($FIG_Config::p3_data_api_url) {
         if ($winMode) {
             print $oh "SET P3API_URL=$FIG_Config::p3_data_api_url\n";
@@ -1064,6 +1088,9 @@ sub WriteAllConfigs {
                     $libList = INCLUDES->{$module};
                 } else {
                     $libList = \@FIG_Config::modules;
+                }
+                if (DEV_MODS->{$module}) {
+                    push @$libList, @$devList;
                 }
                 # Include the project directory for FIG_Config.
                 $xmlOut->emptyTag('includepathentry', path => File::Spec->rel2abs("$projDir/config"));
