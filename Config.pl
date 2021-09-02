@@ -35,25 +35,31 @@ use File::Slurp qw(read_file);
 no warnings qw(once);
 
 ## THIS CONSTANT DEFINES THE CORE MODULES
-use constant CORE => qw(utils ERDB kernel p3_code p3_core p3_scripts RASTtk tbltools seed_core);
+use constant CORE => qw(utils ERDB kernel p3_code p3_core p3_cli RASTtk tbltools seed_core);
 
 ## THIS CONSTANT DEFINES MODULES WITH SPECIAL INCLUDE LISTS
 use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core', 'seed_core'],
-                           RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_core', 'p3_scripts', 'seed_core'],
+                           RASTtk => ['RASTtk', 'utils', 'p3_code', 'p3_core', 'p3_cli', 'seed_core'],
                            p3_code => ['p3_code', 'p3_core', 'seed_core'],
-                           p3_scripts => ['p3_scripts', 'p3_code', 'p3_core', 'seed_core'],
+                           p3_cli => ['p3_cli', 'p3_code', 'p3_core', 'seed_core'],
                            p3_core => ['p3_code', 'p3_core', 'seed_core'] };
 
 ## THIS CONSTANT DEFINES MODULES THAT RELY ON DEV_CONTAINER INCLUDES
-use constant DEV_MODS => { p3_scripts => 1 };
+use constant DEV_MODS => { p3_cli => 1 };
 
-## THIS CONSTANT DEFINED DEV_CONTAINER MODULES
+## THIS CONSTANT DEFINES DEV_CONTAINER MODULES
 use constant DEV_CONTAINED => { app_service => 'https://github.com/PATRIC3/app_service',
         p3_auth => 'https://github.com/PATRIC3/p3_auth',
         Workspace => 'https://github.com/olsonanl/Workspace' };
 
 ## THIS CONSTANT DEFINES EXTERNAL MODULES
 use constant EXTERNALS => { seed_core => 1 };
+
+## THIS CONSTANT CONTAINS SPECIAL GIT MAPPINGS
+use constant ODD_MODS => { p3_cli => 'https://github.com/PATRIC3/p3_cli' };
+
+## THIS CONSTANT CONTAINS MODULES WE ARE DELETING
+use constant OBSOLETE => { p3_scripts => 1 };
 
 =head1 Generate SEEDtk Configuration Files
 
@@ -192,7 +198,6 @@ my $remote_base = dirname($remote);
 # Get the real base directory. For Unix, this is the project
 # directory. For vanilla mode, this is the project directory's
 # parent. We will also figure out the eclipse mode here.
-
 my ($vanillaMode, $projName, $dataParm, $webParm);
 if ($ENV{KB_TOP}) {
     # Here we are in a Unix setup. The base directory has been
@@ -225,30 +230,20 @@ print "Base directory is $base_dir.\n";
 if (! $ENV{KB_TOP}) {
     # Denote this is vanilla mode.
     $vanillaMode = 1;
-    # Do we need to bootstrap?
-    my $libDir = "$base_dir/utils/lib";
-    if (! -f "$libDir/Env.pm") {
-        # Yes. Clone everything.
-        print "Check out from $remote_base\n";
-        chdir $base_dir;
-        for my $module (CORE) {
-            my $url = "$remote_base/$module.git";
+    # Clone all the core modules we don't have.
+    chdir $base_dir;
+    for my $module (CORE) {
+        if (! -d "$base_dir/$module") {
+            my $url = ODD_MODS->{$module} // "$remote_base/$module.git";
             print "Cloning $module from $url.\n";
             my $rc = system("git", "clone", $url);
             if ($rc != 0) {
                 die "Error cloning $url\n";
             }
         }
-        if ($webParm) {
-            # Here we want a web directory.
-            print "Web directory will be generated in current location.\n";
-            system("git", "clone", "$remote_base/Web.git");
-            # Compute the real web directory.
-            $webParm = "$base_dir/Web/Web";
-        }
     }
     # Get access to the utilities library.
-    unshift @INC, $libDir;
+    unshift @INC, "$base_dir/utils/lib";
 }
 # Establish the dev-container if it does not already exist.
 my $userHome = $ENV{HOME};
@@ -312,6 +307,9 @@ for my $module (CORE) {
         unshift @FIG_Config::modules, $module;
     }
 }
+# Insure the list of modules does not include obsolete ones.
+my @modules = grep { ! OBSOLETE->{$_} } @FIG_Config::modules;
+@FIG_Config::modules = @modules;
 # This hash will map each module to its directory.
 my $modBaseDir = ($vanillaMode ? $base_dir : "$projDir/modules");
 my %modules;
@@ -341,28 +339,6 @@ if (! defined $FIG_Config::data) {
     }
 } else {
     $dataRootDir = $FIG_Config::data;
-}
-# Make sure we have the web directory if there is no web root in
-# the command-line parameters.
-if (! defined $FIG_Config::web_dir) {
-    if (! $ARGV[1]) {
-        $webRootDir = '';
-    } else {
-        $webRootDir = FixPath($ARGV[1]);
-        if (! -d $webRootDir) {
-            die "The specified web root directory $webRootDir was not found.";
-        }
-    }
-} else {
-    $webRootDir = $FIG_Config::web_dir;
-}
-# Insure we have the Alexa workspaces.
-my $alexaDir = $FIG_Config::alexa // "$dataRootDir/AlexaSpaces";
-if (! -d $alexaDir) {
-    File::Copy::Recursive::pathmk($alexaDir);
-    if (! $winMode) {
-        chmod 0777, $alexaDir;
-    }
 }
 # Insure we have the log directory.
 my $logDir = "$dataRootDir/logs";
@@ -468,7 +444,7 @@ if ($opt->fc eq 'off') {
     }
     # Write the FIG_Config.
     print "Writing configuration to $outputName.\n";
-    WriteAllParams($outputName, $modBaseDir, \%modules, $projDir, $dataRootDir, $webRootDir, $alexaDir, $winMode, $opt);
+    WriteAllParams($outputName, $modBaseDir, \%modules, $projDir, $dataRootDir, undef, undef, $winMode, $opt);
     # Execute it to get the latest variable values.
     print "Reading back new configuration.\n";
     RunFigConfig($outputName);
@@ -747,8 +723,8 @@ sub WriteAllParams {
         "## All paths should be absolute, not relative.",
         "");
     # Write each parameter.
-    Env::WriteParam($oh, 'root directory of the local web server', web_dir => $webRootDir, $kbase);
     if ($webRootDir) {
+        Env::WriteParam($oh, 'root directory of the local web server', web_dir => $webRootDir, $kbase);
         Env::WriteParam($oh, 'directory for temporary files', temp => "$webRootDir/Tmp", $kbase);
         Env::WriteParam($oh, 'URL for the directory of temporary files', temp_url => 'http://fig.localhost/Tmp');
         Env::WriteParam($oh, 'directory for Alexa workspaces', alexa => $alexaDir);
