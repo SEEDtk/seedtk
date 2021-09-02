@@ -28,6 +28,7 @@ use XML::Writer;
 use IO::File;
 use Config;
 use Cwd;
+use File::Slurp qw(read_file);
 
 # We need to look inside the FIG_Config even though it is loaded at
 # run-time, so we will get lots of warnings about one-time variables.
@@ -283,7 +284,16 @@ my $clientModule = "$dev_base/app_service/lib/Bio/KBase/AppService/Client.pm";
 if (! -f $clientModule) {
     File::Copy::Recursive::fcopy("$projDir/Client.txt", $clientModule);
 }
-# Load the environment library.
+# Verify that the default BV-BRC workspace URL is correct.
+my $wsClientFile = "$dev_base/Workspace/lib/Bio/P3/Workspace/WorkspaceClient.pm";
+my $wsClientText = read_file($wsClientFile);
+my $count = ($wsClientText =~ s/http:/https:/gsi);
+if ($count > 0) {
+    print "Updating WorkspaceClient.\n";
+    open(my $oh, '>', $wsClientFile) || die "Could not update WorkspaceClient: $!";
+    print $oh $wsClientText;
+    close $oh;
+}
 # Save the current environment, before it's been modified by FIG_Config.
 my %oldenv = %ENV;
 # Get the name of the real FIG_Config file (not the output file,
@@ -578,11 +588,6 @@ if ($winMode) {
 print $oh "echo Pulling project directory.\n";
 print $oh "pushd $projDirForPush\n";
 print $oh "git pull --ff-only\n";
-for my $module (keys %{DEV_CONTAINED()}) {
-    print $oh "echo Pulling $module\n";
-    print $oh "cd $dev_base/$module\n";
-    print $oh "git pull --ff-only\n";
-}
 for my $module (@FIG_Config::modules) {
     print $oh "echo Pulling $module\n";
     print $oh "cd $modules{$module}\n";
