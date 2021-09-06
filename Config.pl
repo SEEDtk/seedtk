@@ -137,14 +137,6 @@ Password for signing on to the database. The default is an empty string, meaning
 
 Name of a directory in which to create a shadow FIG_Config for the kbase environment.
 
-=item remoteWeb
-
-If specified, the web directory will be cleared and reloaded from GIT, then updated
-with an explicit PERL path in the shebang header. This is useful when the default PERL
-will not work on the web. The resulting web directory cannot be refreshed from GIT
-without destroying the site. Instead, it must be updated using this script. This option
-is only for Unix. In Windows, the shebang line is not used.
-
 =back
 
 =head2 Notes for Programmers
@@ -159,7 +151,7 @@ $| = 1; # Prevent buffering on STDOUT.
 # Determine the operating system.
 my $winMode = ($^O =~ /Win/ ? 1 : 0);
 # Analyze the command line.
-my ($opt, $usage) = describe_options('%o %c dataRootDirectory webRootDirectory',
+my ($opt, $usage) = describe_options('%o %c dataRootDirectory',
         ["clear|c", "ignore current configuration values"],
         ["fc=s", "name of a file to use for the FIG_Config output, or \"off\" to turn off FIG_Config output",
                 { default => "FIG_Config.pm" }],
@@ -174,7 +166,6 @@ my ($opt, $usage) = describe_options('%o %c dataRootDirectory webRootDirectory',
         ["dbpass=s", "Shrub database password"],
         ["kbase=s", "kbase lib directory"],
         ["eclipse:s", "if specified, then we will set up for Eclipse"],
-        ["remoteWeb", "if specified, the web directory will be configured as a remote web site (Unix only)"],
         ["homeFix", "if specified, a root path of 'homes' will be changed to 'home' (Argonne kludge)"]
         );
 print "Retrieving current configuration.\n";
@@ -198,19 +189,16 @@ my $remote_base = dirname($remote);
 # Get the real base directory. For Unix, this is the project
 # directory. For vanilla mode, this is the project directory's
 # parent. We will also figure out the eclipse mode here.
-my ($vanillaMode, $projName, $dataParm, $webParm);
+my ($vanillaMode, $projName, $dataParm);
 if ($ENV{KB_TOP}) {
     # Here we are in a Unix setup. The base directory has been
     # stored in the environment.
     $base_dir = $ENV{KB_TOP};
-    ($dataParm, $webParm) = @ARGV;
+    ($dataParm) = @ARGV;
 } else {
     # Clean up the incoming path names.
     if ($ARGV[0]) {
         $dataParm = File::Spec->rel2abs($ARGV[0]);
-    }
-    if ($ARGV[1]) {
-        $webParm = File::Spec->rel2abs($ARGV[1]);
     }
     # Fix Windows slash craziness.
     $base_dir =~ tr/\\/\//;
@@ -358,74 +346,7 @@ if (-s $gSpecFile) {
 }
 # Get the dev-container libraries and compute their locations.
 my $devList = [map { "$dev_base/$_/lib" } keys %{DEV_CONTAINED()}];
-# If this is a remote web situation, we need to re-create the web directory here.
-if ($opt->remoteweb) {
-    if (! -d $webRootDir) {
-        die "Web root directory $webRootDir does not exist.";
-    }
-    print "Clearing $webRootDir.\n";
-    File::Copy::Recursive::pathempty($webRootDir);
-    # We have to pull the web stuff into a temporary location and then copy it over, modifying the
-    # CGI files as we go. This is pretty complicated. First, we need to know the perl location.
-    my $perl_loc = `which perl`;
-    # Now we pull the web project directly into the SEEDtk directory.
-    my $webSource = "$base_dir/Web/Web";
-    if (-f "$webSource/index.html") {
-        chdir "$base_dir/Web";
-        print "Refreshing source web directory.\n";
-        system("git", "pull", "--ff-only");
-    } else {
-        chdir $base_dir;
-        print "Retrieving source web directory.\n";
-        system("git", "clone", "$remote_base/Web.git");
-    }
-    # Copy the web directory.
-    opendir(my $dh, $webSource) || die "Could not open web source directory $webSource: $!";
-    # Get all the objects in it that are not hidden.
-    my @webItems = grep { substr($_,0,1) ne '.' } readdir $dh;
-    for my $webItem (@webItems) {
-        my $itemPath = "$webSource/$webItem";
-        my $destPath = "$webRootDir/$webItem";
-        if (-d $itemPath) {
-            print "Copying directory $webItem.\n";
-            File::Copy::Recursive::dircopy($itemPath, $destPath);
-        } elsif ($webItem =~ /\.cgi$/) {
-            # Here we have a CGI script, which we copy manually.
-            print "Converting $webItem.\n";
-            open(my $ih, "<$itemPath") || die "Could not open $itemPath: $!";
-            open(my $oh, ">$destPath") || die "Could not open $destPath: $!";
-            while (! eof $ih) {
-                my $line = <$ih>;
-                if ($line =~ /^#!.+perl/) {
-                    print $oh "#!$perl_loc\n";
-                } else {
-                    print $oh $line;
-                }
-            }
-            # Fix the permissions.
-            chmod 0755, $destPath;
-        } else {
-            # Normal files are copied normally.
-            print "Copying file $webItem.\n";
-            File::Copy::Recursive::fcopy($itemPath, $destPath);
-        }
-    }
-    # Copy the Links.html if needed.
-    if (! -f "$webRootDir/Links.html") {
-        print "Creating Links.html.\n";
-        File::Copy::Recursive::fcopy("$webSource/lib/Links.html", "$webRootDir/Links.html") ||
-            die "Could not copy links file: $!";
-    }
-    # Insure we have a temp directory.
-    my $tmpDir = $FIG_Config::temp;
-    if (! -d $tmpDir) {
-        File::Copy::Recursive::pathmk($tmpDir);
-        if (! $winMode) {
-            chmod 0777, $tmpDir;
-        }
-    }
-}
-#If the FIG_Config write has NOT been turned off, then write the FIG_Config.
+# If the FIG_Config write has NOT been turned off, then write the FIG_Config.
 if ($opt->fc eq 'off') {
     print "FIG_Config output suppressed.\n";
 } else {
@@ -738,6 +659,7 @@ sub WriteAllParams {
     Env::WriteParam($oh, 'default conserved domain search URL', ConservedDomainSearchURL => "http://maple.mcs.anl.gov:5600");
     Env::WriteParam($oh, 'Patric Data API URL', p3_data_api_url => '');
     Env::WriteParam($oh, 'user home directory', userHome => ($ENV{HOME} || $ENV{HOMEPATH}));
+    Env::WriteParam($oh, 'temporary directory', temp => "$dataRootDir/Temp");
     # Write the perl path. Note this is a forced override.
     Env::WriteParam($oh, 'perl execution path', perl_path => $Config{perlpath}, 1);
     ## Put new non-Shrub parameters here.
