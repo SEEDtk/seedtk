@@ -63,7 +63,7 @@ use constant OBSOLETE => { p3_scripts => 1 };
 
 =head1 Generate SEEDtk Configuration Files
 
-    Config [ options ] dataDirectory webDirectory
+    Config [ options ] dataDirectory
 
 This method generates (or re-generates) the L<FIG_Config> and B<UConfig.sh> files for a
 SEEDtk environment.
@@ -725,10 +725,10 @@ sub WriteAllParams {
     # Write each parameter.
     if ($webRootDir) {
         Env::WriteParam($oh, 'root directory of the local web server', web_dir => $webRootDir, $kbase);
-        Env::WriteParam($oh, 'directory for temporary files', temp => "$webRootDir/Tmp", $kbase);
         Env::WriteParam($oh, 'URL for the directory of temporary files', temp_url => 'http://fig.localhost/Tmp');
         Env::WriteParam($oh, 'directory for Alexa workspaces', alexa => $alexaDir);
     }
+    Env::WriteParam($oh, 'directory for temporary files', temp => "$dataRootDir/Tmp", $kbase);
     Env::WriteParam($oh, 'TRUE for windows mode', win_mode => ($winMode ? 1 : 0));
     Env::WriteParam($oh, 'source code project directory', proj => $projDir, $kbase);
     Env::WriteParam($oh, 'location of shared code', cvsroot => '');
