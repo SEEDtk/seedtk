@@ -45,7 +45,7 @@ use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core', 's
                            p3_core => ['p3_code', 'p3_core', 'seed_core'] };
 
 ## THIS CONSTANT DEFINES MODULES THAT RELY ON DEV_CONTAINER INCLUDES
-use constant DEV_MODS => { p3_cli => 1 };
+use constant DEV_MODS => { p3_cli => 1, kernel => 1 };
 
 ## THIS CONSTANT DEFINES DEV_CONTAINER MODULES
 use constant DEV_CONTAINED => { app_service => 'https://github.com/PATRIC3/app_service',
@@ -60,6 +60,11 @@ use constant ODD_MODS => { p3_cli => 'https://github.com/PATRIC3/p3_cli' };
 
 ## THIS CONSTANT CONTAINS MODULES WE ARE DELETING
 use constant OBSOLETE => { p3_scripts => 1 };
+
+## THIS CONSTANT LISTS CLI COMMANDS IN KERNEL USED BY JAVA
+use constant CLI_SPECIAL => [ 'appserv-enumerate-tasks', 'appserv-query-task', 'appserv-start-app',
+    'p3-cp', 'p3-ls', 'p3-mkdir' ];
+
 
 =head1 Generate SEEDtk Configuration Files
 
@@ -466,6 +471,20 @@ if ($vanillaMode) {
 }
 # Setup the java commands.
 SetupJava("$modules{kernel}/jars", $projDir);
+# Setup the CLI commands.
+if ($winMode) {
+    # In Windows, we need to set up a special directory of CMD files for the CLI commands used by Java.
+    my $dir = $modules{kernel};
+    for my $script (@{CLI_SPECIAL()}) {
+        my $fileName = "$dir/$script.cmd";
+        my $scriptName = "$dir/scripts/$script.pl";
+        open(my $oh, '>', $fileName) || die "Could not write command file for $fileName: $!";
+        print $oh "\@echo off\n";
+        print $oh "perl $scriptName \%*\n";
+        close $oh;
+    }
+
+}
 # Now we need to create the pull-all script.
 my $fileName = ($winMode ? "$projDir/pull-all.cmd" : "$projDir/bin/pull-all");
 open(my $oh, ">$fileName") || die "Could not open $fileName: $!";
