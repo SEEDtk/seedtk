@@ -468,6 +468,24 @@ if ($vanillaMode) {
     chdir $projDir;
     system("make");
     chdir $oldDir;
+    # Now we need to fix the path if there is a custom JDK.
+    opendir my $dh, $projDir || die "Could not open project subdirectories: $!";
+    my @java = grep { $_ =~ /^jdk-/ && -d "$projDir/$_" } readdir $dh;
+    if (@java) {
+        my $jdkPath = "$projDir/$java[0]/bin";
+        my @lines;
+        open (my $ih, '<', "$projDir/user-env.sh") || die "Could not open user-env.sh: $!";
+        while (! eof $ih) {
+            my $line = <$ih>;
+            if ($line =~ /^export PATH=(.+)/) {
+                $line = "export PATH=$jdkPath:$1\n";
+            }
+            push @lines, $line;
+        }
+        close $ih;
+        open(my $oh, '>', "$projDir/user-env.sh") || die "Could not re-open user-env.sh $!";
+        print $oh @lines;
+    }
 }
 # Setup the java commands.
 SetupJava("$modules{kernel}/jars", $projDir);
@@ -933,14 +951,7 @@ sub WriteAllConfigs {
     } else {
         # Here we just need to add the bin directory to the path, and possibly a custom JDK.
         # Start with the bin directory.
-        my $newPath = "$projDir/bin";
-        # Check for a custom JDK.
-        opendir my $dh, $projDir || die "Could not open project subdirectories: $!";
-        my @java = grep { $_ =~ /^jdk-/ && -d "$projDir/$_" } readdir $dh;
-        if (@java) {
-            $newPath = "$projDir/$java[0]/bin:$newPath";
-        }
-        print $oh "export PATH=$newPath:\$PATH\n";
+        print $oh "export PATH=$projDir\bin:\$PATH\n";
     }
     # Set the PERL libraries.
     my $libs = join($delim, @FIG_Config::libs);
