@@ -905,7 +905,6 @@ sub WriteAllConfigs {
         print $oh "\@ECHO OFF\n";
     }
     print "Writing environment changes to $fileName.\n";
-    #
     # Compute the script paths.
     my $paths = join($delim, @FIG_Config::scripts);
     # Write the comment.
@@ -932,8 +931,16 @@ sub WriteAllConfigs {
         }
         print $oh "path $paths\n";
     } else {
-        # On the Mac, we simply put the bin subdirectory in the path.
-        print $oh "export PATH=$projDir/bin:\$PATH\n";
+        # Here we just need to add the bin directory to the path, and possibly a custom JDK.
+        # Start with the bin directory.
+        my $newPath = "$projDir/bin";
+        # Check for a custom JDK.
+        opendir my $dh, $projDir || die "Could not open project subdirectories: $!";
+        my @java = grep { $_ =~ /^jdk-/ && -d "$projDir/$_" } readdir $dh;
+        if (@java) {
+            $newPath = "$projDir/$java[0]/bin:$newPath";
+        }
+        print $oh "export PATH=$newPath:\$PATH\n";
     }
     # Set the PERL libraries.
     my $libs = join($delim, @FIG_Config::libs);
