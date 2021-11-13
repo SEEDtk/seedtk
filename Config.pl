@@ -63,7 +63,7 @@ use constant OBSOLETE => { p3_scripts => 1 };
 
 ## THIS CONSTANT LISTS CLI COMMANDS IN KERNEL USED BY JAVA
 use constant CLI_SPECIAL => [ 'appserv-enumerate-tasks', 'appserv-query-task', 'appserv-start-app',
-    'p3-cp', 'p3-ls', 'p3-mkdir' ];
+    'p3-cp', 'p3-ls', 'p3-mkdir', 'p3-echo' ];
 
 
 =head1 Generate SEEDtk Configuration Files
@@ -496,12 +496,14 @@ if ($winMode) {
     for my $script (@{CLI_SPECIAL()}) {
         my $fileName = "$dir/$script.cmd";
         my $scriptName = "$dir/scripts/$script.pl";
+        if (! -f $scriptName) {
+            $scriptName = "$modules{p3_cli}/scripts/$script.pl"
+        }
         open(my $oh, '>', $fileName) || die "Could not write command file for $fileName: $!";
         print $oh "\@echo off\n";
         print $oh "perl $scriptName \%*\n";
         close $oh;
     }
-
 }
 # Now we need to create the pull-all script.
 my $fileName = ($winMode ? "$projDir/pull-all.cmd" : "$projDir/bin/pull-all");
