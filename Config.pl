@@ -171,7 +171,8 @@ my ($opt, $usage) = describe_options('%o %c dataRootDirectory',
         ["dbpass=s", "Shrub database password"],
         ["kbase=s", "kbase lib directory"],
         ["eclipse:s", "if specified, then we will set up for Eclipse"],
-        ["homeFix", "if specified, a root path of 'homes' will be changed to 'home' (Argonne kludge)"]
+        ["homeFix", "if specified, a root path of 'homes' will be changed to 'home' (Argonne kludge)"],
+        ["java=s", "if specified, the root directory of the Eclipse workspace, from which java modules will be derived"]
         );
 print "Retrieving current configuration.\n";
 # Compute the eclipse option.
@@ -704,6 +705,10 @@ sub WriteAllParams {
     # Now we need to build our directory lists. We start with the module base directory.
     Env::WriteLines($oh, "", "# code module base directory",
             "our \$mod_base = '$modBaseDir';");
+    # If specified, update the java module list.
+    if ($opt->java) {
+        @FIG_Config::java = findJavaModules($opt->java);
+    }
     # Now we set up the directory and module lists.
     my @scripts = grep { -d $_ } map { "$modules->{$_}/scripts" } @FIG_Config::modules;
     my @libs = map { "$modules->{$_}/lib" } @FIG_Config::modules;
@@ -1409,4 +1414,58 @@ sub SetupScript {
     if ($wrappers) {
         $wrappers->{$binaryName} = 1;
     }
+}
+
+=head3 findJavaModules
+
+    my @list = findJavaModules($wsDir);
+
+This method searches the eclipse preference directory to find the modules defined in the "Java" working
+set and returns their names in a list.
+
+=over 4
+
+=item wsDir
+
+The name of the root directory for the Eclipse workspace.
+
+=item RETURN
+
+Returns a list of the names of the Java projects defined in the workspace.
+
+=back
+
+=cut
+
+sub findJavaModules {
+    my ($wsDir) = @_;
+    my @retVal;
+    if (! open(my $ih, '<', "$wsDir/.metadata/.plugins/org.eclipse.ui.workbench/workingsets.xml")) {
+        print STDERR "WARNING:  Could not open working set definitions.\n";
+    } else {
+        # Mode is 0 until we find the start line, 1 while processing, 2 when we find the end line.
+        my $mode = 0;
+        while ($mode < 2 && ! eof $ih) {
+            my $line = <$ih>;
+            if ($mode == 0 && $line =~ /<workingSet .+ name="Java">/) {
+                $mode = 1;
+            } elsif ($mode == 1) {
+                if ($line =~ /<\/workingSet/) {
+                    # This is the end of the definition.
+                    $mode = 2;
+                } elsif ($line =~ /<item elementID="=([^"]+)"/) {
+                    # Here we have a working set item construed as a Java element.
+                    push @retVal, $1;
+                } elsif ($line =~ /<item factoryID=".+ path="\/([^"]+)"/) {
+                    # Here we have a working set item construed as a resource.  Only pass if it is not
+                    # a PERL module.
+                    my $module = $1;
+                    if ($module ne $eclipseParm && ! grep { $_ eq $module } CORE()) {
+                        push @retVal, $1;
+                    }
+                }
+            }
+        }
+    }
+    return @retVal;
 }
