@@ -957,7 +957,7 @@ sub WriteAllConfigs {
     } else {
         # Here we just need to add the bin directory to the path, and possibly a custom JDK.
         # Start with the bin directory.
-        print $oh "export PATH=$projDir\bin:\$PATH\n";
+        print $oh "export PATH=$projDir/bin:\$PATH\n";
     }
     # Set the PERL libraries.
     my $libs = join($delim, @FIG_Config::libs);
