@@ -65,6 +65,8 @@ use constant OBSOLETE => { p3_scripts => 1 };
 use constant CLI_SPECIAL => [ 'appserv-enumerate-tasks', 'appserv-query-task', 'appserv-start-app',
     'p3-cp', 'p3-ls', 'p3-mkdir', 'p3-echo' ];
 
+## THIS CONSTANT LISTS FLASK PROJECTS
+use constant FLASKS => [ 'biosyntheticmachines' ];
 
 =head1 Generate SEEDtk Configuration Files
 
@@ -490,6 +492,8 @@ if ($vanillaMode) {
 }
 # Setup the java commands.
 SetupJava("$modules{kernel}/jars", $projDir);
+# Set up the FLASK projects.
+SetupFlask($winMode, $modBaseDir, "$projDir/bin");
 # Setup the CLI commands.
 if ($winMode) {
     # In Windows, we need to set up a special directory of CMD files for the CLI commands used by Java.
@@ -536,6 +540,8 @@ for my $javaDir (@FIG_Config::java) {
     print $oh "cd $modBaseDir/$javaDir\n";
     print $oh "git pull --ff-only\n";
 }
+# Add the flask projects.
+
 # Add the web directory if needed.
 if ($FIG_Config::web_dir && ! $ENV{KB_TOP} && ! $opt->remoteweb) {
     print $oh "echo Pulling web directory\n";
@@ -1468,4 +1474,57 @@ sub findJavaModules {
         }
     }
     return @retVal;
+}
+
+=head3 SetupFlask
+
+    SetupFlask($winMode, $modBaseDir, $binDir);
+
+This method sets up the scripts for running the flask servers, and adds them to the module hash so they
+will be pulled from GitHub.
+
+=over 4
+
+=item winMode
+
+TRUE for a Windows machine, else FALSE.
+
+=item modBaseDir
+
+Base directory for modules.
+
+=item binDir
+
+Command directory for non-Windows machines.
+
+=cut
+
+sub SetupFlask {
+    my ($winMode, $modBaseDir, $binDir) = @_;
+    my $port = 5000;
+    for my $flask (@{FLASKS()}) {
+        my $flaskDir = "$modBaseDir/$flask";
+        if (-d $flaskDir) {
+            # Here we have an installed flask project.
+            $modules{$flask} = $flaskDir;
+            # Create the run script.
+            if ($winMode) {
+                open($oh, '>', "$modules{kernel}/scripts/$flask.cmd") || die "Could not open $flask script file: $!";
+                print $oh "\@ECHO OFF\n";
+                print $oh "CD $flaskDir\n";
+                print $oh "SET FLASK_APP=passenger_wsgi.py\n";
+                print $oh "flask run --port $port\n";
+                close $oh;
+            } else {
+                open($oh, '>', "$binDir/$flask") || die "Could not open $flask script file: $!";
+                print $oh "cd $flaskDir\n";
+                print $oh "export FLASK_APP=passenger_wsgi.py\n";
+                print $oh "flask run --port $port\n";
+                close $oh;
+            }
+            print "$flask set up for port $port.\n";
+            # Increment the port for the next site.
+            $port++;
+        }
+    }
 }
