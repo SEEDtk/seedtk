@@ -319,6 +319,8 @@ for my $module (@FIG_Config::modules) {
     # Add it to the hash.
     $modules{$module} = $dir;
 }
+# Remember the jar directory.
+my $jarDir = "$modules{kernel}/jars";
 # Check for older files that use a different name for FIG_Config::data.
 if (! defined $FIG_Config::data && $FIG_Config::shrub_dir) {
     $FIG_Config::data = $FIG_Config::shrub_dir;
@@ -451,7 +453,7 @@ if ($webRootDir) {
 # execution paths.
 if ($vanillaMode) {
     # Set up the paths and PERL libraries.
-    WriteAllConfigs($winMode, \%modules, $projDir, $opt, \%oldenv);
+    WriteAllConfigs($winMode, \%modules, $projDir, $jarDir, $opt, \%oldenv);
     if (! $winMode) {
         # For an vanilla Mac installation, we have to set up binary versions of the scripts
         # and make them executable.
@@ -476,14 +478,21 @@ if ($vanillaMode) {
     my @java = grep { $_ =~ /^jdk-/ && -d "$projDir/$_" } readdir $dh;
     if (@java) {
         my $jdkPath = "$projDir/$java[0]/bin";
+        my $jdirFound;
         my @lines;
         open (my $ih, '<', "$projDir/user-env.sh") || die "Could not open user-env.sh: $!";
         while (! eof $ih) {
             my $line = <$ih>;
             if ($line =~ /^export PATH=(.+)/) {
                 $line = "export PATH=$jdkPath:$1\n";
+            } elsif ($line =~ /^export SEED_JARS/) {
+                $jdirFound = 1;
             }
             push @lines, $line;
+        }
+        # Insure we have the JAR directory.
+        if (! $jdirFound) {
+            push @lines, "export SEED_JARS=$jarDir\n";
         }
         close $ih;
         open(my $oh, '>', "$projDir/user-env.sh") || die "Could not re-open user-env.sh $!";
@@ -491,7 +500,7 @@ if ($vanillaMode) {
     }
 }
 # Setup the java commands.
-SetupJava("$modules{kernel}/jars", $projDir);
+SetupJava($jarDir, $projDir);
 # Set up the FLASK projects.
 SetupFlask($winMode, $modBaseDir, "$projDir/bin");
 # Setup the CLI commands.
@@ -901,6 +910,10 @@ disk.
 
 Name of the project directory.
 
+=item jarDir
+
+Name of the JAR directory.
+
 =item opt
 
 Command-line options object.
@@ -915,7 +928,7 @@ Reference to a hash that contains the original environment.
 
 sub WriteAllConfigs {
     # Get the parameters.
-    my ($winMode, $modules, $projDir, $opt, $oldenv) = @_;
+    my ($winMode, $modules, $projDir, $jarDir, $opt, $oldenv) = @_;
     # Compute the output file, the comment mark, and the path delimiter.
     my $fileName = "$projDir/user-env.";
     my ($delim, $rem);
@@ -983,13 +996,15 @@ sub WriteAllConfigs {
         # an executable type. We need to fix that.
         print $oh "SET PATHEXT=%PATHEXT%;.PL\n"
     }
-    # Add the environment variable that tells us what our environment is.
+    # Add the environment variables that tell us what our environment is and where to find the jars.
     if ($winMode) {
         print $oh "SET STK_TYPE=Windows\n";
         print $oh "SET SERVICE=SEEDtk\n";
+        print $oh "SET SEED_JARS=$jarDir\n";
     } else {
         print $oh "export STK_TYPE=Mac\n";
         print $oh "export SERVICE=SEEDtk\n";
+        print $oh "export SEED_JARS=$jarDir\n";
     }
     # Add the environment variables for the PATRIC Data API.
     if ($FIG_Config::p3_data_api_url) {
