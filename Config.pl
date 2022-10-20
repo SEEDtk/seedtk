@@ -173,7 +173,7 @@ my ($opt, $usage) = describe_options('%o %c dataRootDirectory',
         ["dbpass=s", "Shrub database password"],
         ["kbase=s", "kbase lib directory"],
         ["eclipse:s", "if specified, then we will set up for Eclipse"],
-        ["homeFix", "if specified, a root path of 'homes' will be changed to 'home' (Argonne kludge)"],
+        ["homeFix", "if specified, a root path of 'homes/' will be changed to '~' (Argonne kludge)"],
         ["java=s", "if specified, the root directory of the Eclipse workspace, from which java modules will be derived"]
         );
 print "Retrieving current configuration.\n";
@@ -219,7 +219,7 @@ if ($ENV{KB_TOP}) {
     }
 }
 if ($opt->homefix) {
-    $base_dir =~ s#/homes/#/home/#;
+    $base_dir =~ s#/homes/#~#;
     print "Fixing home directory.\n";
 }
 print "Base directory is $base_dir.\n";
@@ -475,24 +475,41 @@ if ($vanillaMode) {
     chdir $oldDir;
     # Now we need to fix the path if there is a custom JDK.
     opendir my $dh, $projDir || die "Could not open project subdirectories: $!";
-    my @java = grep { $_ =~ /^jdk-/ && -d "$projDir/$_" } readdir $dh;
+    my @java = grep { $_ =~ /^(?:jdk-|apache-maven-)/ && -d "$projDir/$_" } readdir $dh;
     if (@java) {
-        my $jdkPath = "$projDir/$java[0]/bin";
-        my $jdirFound;
+        my ($javaVersion) = grep { $_ =~ /^jdk-/ } @java;
+        my ($mvnVersion) = grep { $_ =~ /^apache-maven/ } @java;
+        my $jdkPath = "$projDir/$javaVersion/bin";
+        my $mvnPath = "$projDir/$mvnVersion/bin";
         my @lines;
+        # Insure we have the java environment variables.
+        push @lines, "export SEED_JARS=$jarDir\n";
+        push @lines, "export MAVEN_HOME=$mvnPath\n";
+        push @lines, "export JAVA_HOME=$jdkPath\n";
+        # Now copy the user-env and edit the JAVA stuff.
         open (my $ih, '<', "$projDir/user-env.sh") || die "Could not open user-env.sh: $!";
         while (! eof $ih) {
+            my $skip;
             my $line = <$ih>;
             if ($line =~ /^export PATH=(.+)/) {
-                $line = "export PATH=$jdkPath:$1\n";
+                my $path = $1;
+                if (index($path, 'JAVA_HOME/bin') < 0) {
+                    $path = "\$JAVA_HOME/bin:$path";
+                }
+                if (index($path, 'MAVEN_HOME/bin') < 0) {
+                    $path = "\$MAVEN_HOME/bin:$path";
+                }
+                $line = "export PATH=$path\n";
             } elsif ($line =~ /^export SEED_JARS/) {
-                $jdirFound = 1;
+                $skip = 1
+            } elsif ($line =~ /^export JAVA_HOME/) {
+                $skip = 1;
+            } elsif ($line =~ /^export MAVEN_HOME/) {
+                $skip = 1;
             }
-            push @lines, $line;
-        }
-        # Insure we have the JAR directory.
-        if (! $jdirFound) {
-            push @lines, "export SEED_JARS=$jarDir\n";
+            if (! $skip) {
+                push @lines, $line;
+            }
         }
         close $ih;
         open(my $oh, '>', "$projDir/user-env.sh") || die "Could not re-open user-env.sh $!";
