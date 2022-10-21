@@ -479,8 +479,8 @@ if ($vanillaMode) {
     if (@java) {
         my ($javaVersion) = grep { $_ =~ /^jdk-/ } @java;
         my ($mvnVersion) = grep { $_ =~ /^apache-maven/ } @java;
-        my $jdkPath = "$projDir/$javaVersion/bin";
-        my $mvnPath = "$projDir/$mvnVersion/bin";
+        my $jdkPath = "$projDir/$javaVersion";
+        my $mvnPath = "$projDir/$mvnVersion";
         my @lines;
         # Insure we have the java environment variables.
         push @lines, "export SEED_JARS=$jarDir\n";
