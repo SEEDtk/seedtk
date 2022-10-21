@@ -563,8 +563,21 @@ for my $module (@FIG_Config::modules) {
 # Add the java directories.
 for my $javaDir (@FIG_Config::java) {
     print $oh "echo Pulling java directory $javaDir\n";
-    print $oh "cd $modBaseDir/$javaDir\n";
+    my $realDir = "$modBaseDir/$javaDir";
+    print $oh "cd $realDir\n";
     print $oh "git pull --ff-only\n";
+    # Check for a maven project.
+    if (-d "$realDir/.mvn") {
+        # This is a maven project, so we need to pull the sub-projects.
+        opendir(my $dh, $realDir) || die "Could not open $javaDir: $!";
+        my @subs = grep { -s "$realDir/$_/pom.xml" && substr($_,0,1) ne '.' } readdir $dh;
+        closedir $dh;
+        print $oh "echo Pulling $javaDir sub-projects.\n";
+        for my $sub (@subs) {
+            print $oh "cd $realDir/$sub\n";
+            print $oh "git pull origin master\n";
+        }
+    }
 }
 # Add the flask projects.
 
@@ -740,6 +753,7 @@ sub WriteAllParams {
     # If specified, update the java module list.
     if ($opt->java) {
         @FIG_Config::java = findJavaModules($opt->java);
+        print scalar(@FIG_Config::java) . " java modules found in configuration.\n";
     }
     # Now we set up the directory and module lists.
     my @scripts = grep { -d $_ } map { "$modules->{$_}/scripts" } @FIG_Config::modules;
@@ -1492,14 +1506,18 @@ sub findJavaModules {
                     # This is the end of the definition.
                     $mode = 2;
                 } elsif ($line =~ /<item elementID="=([^"]+)"/) {
-                    # Here we have a working set item construed as a Java element.
-                    push @retVal, $1;
+                    # Here we have a working set item construed as a Java element.  Only pass it
+                    # if it is not a sub-project.
+                    my $module = $1;
+                    if (-d "$modBaseDir/$module") {
+                        push @retVal, $module;
+                    }
                 } elsif ($line =~ /<item factoryID=".+ path="\/([^"]+)"/) {
                     # Here we have a working set item construed as a resource.  Only pass if it is not
                     # a PERL module.
                     my $module = $1;
                     if ($module ne $eclipseParm && ! grep { $_ eq $module } CORE()) {
-                        push @retVal, $1;
+                        push @retVal, $module;
                     }
                 }
             }
