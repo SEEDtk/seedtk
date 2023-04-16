@@ -1317,7 +1317,7 @@ sub SetupJava {
                     close $jh;
                 } else {
                     open(my $jh, '>', "$projDir/bin/$javaName") || die "Could not open $javaName command file: $!";
-                    print $jh "$command \$\@\n";
+                    print $jh "$command \"\$\@\"\n";
                     close $jh;
                     chmod 0755, "$projDir/bin/$javaName";
                 }
