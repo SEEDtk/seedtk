@@ -219,7 +219,7 @@ if ($ENV{KB_TOP}) {
     }
 }
 if ($opt->homefix) {
-    $base_dir =~ s#/homes/#~#;
+    $base_dir =~ s#/homes/#home/#;
     print "Fixing home directory.\n";
 }
 print "Base directory is $base_dir.\n";
@@ -339,7 +339,7 @@ if (! defined $FIG_Config::data) {
     $dataRootDir = $FIG_Config::data;
 }
 # Insure we have the log directory.
-my $logDir = "$dataRootDir/logs";
+my $logDir = $FIG_Config::logDir || "$dataRootDir/logs";
 if (! -d $logDir) {
     File::Copy::Recursive::pathmk($logDir);
     if (! $winMode) {
