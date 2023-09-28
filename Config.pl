@@ -35,7 +35,7 @@ use File::Slurp qw(read_file);
 no warnings qw(once);
 
 ## THIS CONSTANT DEFINES THE CORE MODULES
-use constant CORE => qw(utils ERDB kernel p3_code p3_core p3_cli RASTtk tbltools seed_core);
+use constant CORE => qw(utils kernel p3_code p3_core p3_cli RASTtk tbltools seed_core);
 
 ## THIS CONSTANT DEFINES MODULES WITH SPECIAL INCLUDE LISTS
 use constant INCLUDES => { utils => ['utils', 'RASTtk', 'p3_code', 'p3_core', 'seed_core'],
