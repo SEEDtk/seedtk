@@ -560,15 +560,17 @@ for my $module (@FIG_Config::modules) {
     print $oh "cd $modules{$module}\n";
     print $oh "git pull --ff-only\n";
 }
-# Add the java directories.
+# Add the java directories.  We do the maven projects first, then the remaining ones.
+my %pull = map { $_ => 1 } @FIG_Config::java;
 for my $javaDir (@FIG_Config::java) {
-    print $oh "echo Pulling java directory $javaDir\n";
     my $realDir = "$modBaseDir/$javaDir";
-    print $oh "cd $realDir\n";
-    print $oh "git pull --ff-only\n";
     # Check for a maven project.
     if (-d "$realDir/.mvn") {
-        # This is a maven project, so we need to pull the sub-projects.
+        # This is a maven project, so we need to pull the project and the sub-projects.
+        print $oh "echo Pulling java directory $javaDir\n";
+        print $oh "cd $realDir\n";
+        print $oh "git pull --ff-only\n";
+        delete $pull{$javaDir};
         opendir(my $dh, $realDir) || die "Could not open $javaDir: $!";
         my @subs = grep { -s "$realDir/$_/pom.xml" && substr($_,0,1) ne '.' } readdir $dh;
         closedir $dh;
@@ -576,10 +578,17 @@ for my $javaDir (@FIG_Config::java) {
         for my $sub (@subs) {
             print $oh "cd $realDir/$sub\n";
             print $oh "git pull origin master\n";
+            delete $pull{$sub};
         }
     }
 }
-# Add the flask projects.
+for my $javaDir (sort keys %pull) {
+    # Now the non-maven projects.
+    print $oh "echo Pulling java directory $javaDir\n";
+    my $realDir = "$modBaseDir/$javaDir";
+    print $oh "cd $realDir\n";
+    print $oh "git pull --ff-only\n";
+}
 
 # Add the web directory if needed.
 if ($FIG_Config::web_dir && ! $ENV{KB_TOP} && ! $opt->remoteweb) {
