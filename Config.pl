@@ -116,7 +116,7 @@ repository is turned off and DNA requests will fail.
 
 If this is an Eclipse environment, the name of the project cloned from the main SEEDtk
 project (that is, the name of the I<project directory project>). If you specify this
-parameter without a value, the value is presumed to by C<SEEDtk>.
+parameter without a value, the value is presumed to be C<SEEDtk>.
 
 =item gfw
 
