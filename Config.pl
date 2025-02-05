@@ -63,7 +63,7 @@ use constant OBSOLETE => { p3_scripts => 1 };
 
 ## THIS CONSTANT LISTS CLI COMMANDS IN KERNEL USED BY JAVA
 use constant CLI_SPECIAL => [ 'appserv-enumerate-tasks', 'appserv-query-task', 'appserv-start-app',
-    'p3-cp', 'p3-ls', 'p3-mkdir', 'p3-echo' ];
+    'p3-cp', 'p3-ls', 'p3-mkdir', 'p3-echo', 'p3-login' ];
 
 ## THIS CONSTANT LISTS FLASK PROJECTS
 use constant FLASKS => [ 'biosyntheticmachines' ];
@@ -791,39 +791,6 @@ sub WriteAllParams {
     Env::WriteLines($oh, "", "# list of tool directories",
             "our \@tools = (" . join(", ", map { "'$projDir/packages/$_'" } @toolDirs) .
                     ");");
-    # Now comes the Shrub configuration section.
-    my $userdata = $opt->dbuser . "/" . ($opt->dbpass // '');
-    my $dbname = $opt->dbname // '';
-    Env::WriteLines($oh, "", "", "# SHRUB CONFIGURATION", "");
-    Env::WriteParam($oh, 'root directory for Shrub data files (should have subdirectories "Inputs" (optional) and "LoadFiles" (required))',
-            data => $dataRootDir, $kbase);
-    Env::WriteParam($oh, 'full name of the Shrub DBD XML file', shrub_dbd => "$modules->{ERDB}/ShrubDBD.xml", $kbase);
-    Env::WriteParam($oh, 'Shrub database signon info (name/password)', userData => $userdata);
-    Env::WriteParam($oh, 'name of the Shrub database (empty string to use the default)', shrubDB => $dbname);
-    Env::WriteParam($oh, 'TRUE if we should create indexes before a table load (generally TRUE for MySQL, FALSE for PostGres)',
-            preIndex => 1);
-    Env::WriteParam($oh, 'default DBMS (currently only "mysql" works for sure)', dbms => "mysql");
-    Env::WriteParam($oh, 'database access port', dbport => 3306);
-    Env::WriteParam($oh, 'TRUE if we are using an old version of MySQL (legacy parameter; may go away)', mysql_v3 => 0);
-    Env::WriteParam($oh, 'default MySQL storage engine', default_mysql_engine => "InnoDB");
-    Env::WriteParam($oh, 'database host server (empty string to use the default)', dbhost => $opt->dbhost);
-    Env::WriteParam($oh, 'TRUE to turn off size estimates during table creation-- should be FALSE for MyISAM',
-            disable_dbkernel_size_estimates => 1);
-    Env::WriteParam($oh, 'mode for LOAD TABLE INFILE statements, empty string is OK except in special cases (legacy parameter; may go away)',
-            load_mode => '');
-    # Now comes the DNA repository. There are two cases-- a local repository or a global one. Check the type.
-    my $dnaRepo = $opt->dna;
-    if (! $dnaRepo) {
-        # Here we have the local repository.
-        $dnaRepo = "$dataRootDir/DnaRepo";
-    } elsif ($dnaRepo eq 'none') {
-        $dnaRepo = '';
-    }
-    Env::WriteParam($oh, 'location of the DNA repository', shrub_dna => $dnaRepo, $kbase);
-    # Next the sample repository. This is simpler.
-    my $sampleRepo = "$dataRootDir/SampleRepo";
-    Env::WriteParam($oh, 'location of the Sample repository (blank for none)', shrub_sample => $sampleRepo);
-    ## Put new Shrub parameters here.
     if ($vanillaMode || $kbase) {
         # For a vanilla project or KBase, we need to convince FIG_Config to modify the path and the libpath.
         my @paths = ($winMode ? ($projDir, @scripts) : "$FIG_Config::proj/bin");
@@ -832,17 +799,7 @@ sub WriteAllParams {
         GeneratePathFix($oh, $winMode, libraries => 'PERL5LIB', @libs, "$FIG_Config::proj/config");
     }
     if ($vanillaMode) {
-        if (! $winMode) {
-            # On the Mac, we need to fix the MySQL library path.
-            opendir(my $dh, "/usr/local") || die "Could not perform MySQL directory search.";
-            my ($libdir) = grep { ($_ =~ /^mysql-\d+/) && (-f "/usr/local/$_/libmysqlclient.18.dylib") } readdir $dh;
-            if ($libdir) {
-                Env::WriteLines($oh, "", "# Set DYLD path for mysql",
-                        "\$ENV{DYLD_FALLBACK_LIBRARY_PATH} = \"/usr/local/$libdir/lib\";");
-                print "\n**** NOTE: IF DBD::MySQL fails, you will need to run\n\n";
-                print "sudo ln -s /usr/local/$libdir/lib/libmysqlclient.18.dylib /usr/local/lib/libmysqlclient.18.dylib\n\n";
-            }
-        } elsif ($winMode) {
+		if ($winMode) {
             # On Windows, we need to upgrade the PATHEXT.
             Env::WriteLines($oh, "", "# Insure PERL is executable.",
                     "unless (\$ENV{PATHEXT} =~ /\.pl/i) {",
