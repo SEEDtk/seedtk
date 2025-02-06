@@ -743,6 +743,8 @@ sub WriteAllParams {
         Env::WriteParam($oh, 'URL for the directory of temporary files', temp_url => 'http://fig.localhost/Tmp');
         Env::WriteParam($oh, 'directory for Alexa workspaces', alexa => $alexaDir);
     }
+    Env::WriteParam($oh, 'root directory for Shrub data files (should have subdirectories "Inputs" (optional) and "LoadFiles" (required))',
+            data => $dataRootDir, $kbase);
     Env::WriteParam($oh, 'directory for temporary files', temp => "$dataRootDir/Tmp", $kbase);
     Env::WriteParam($oh, 'TRUE for windows mode', win_mode => ($winMode ? 1 : 0));
     Env::WriteParam($oh, 'source code project directory', proj => $projDir, $kbase);
