@@ -219,7 +219,7 @@ if ($ENV{KB_TOP}) {
     }
 }
 if ($opt->homefix) {
-    $base_dir =~ s#/homes/#home/#;
+    $base_dir =~ s#/homes/#/home/#;
     print "Fixing home directory.\n";
 }
 print "Base directory is $base_dir.\n";
@@ -486,6 +486,7 @@ if ($vanillaMode) {
         push @lines, "export SEED_JARS=$jarDir\n";
         push @lines, "export MAVEN_HOME=$mvnPath\n";
         push @lines, "export JAVA_HOME=$jdkPath\n";
+        push @lines, "export CODE_BASE=$modBaseDir\n";
         # Now copy the user-env and edit the JAVA stuff.
         open (my $ih, '<', "$projDir/user-env.sh") || die "Could not open user-env.sh: $!";
         while (! eof $ih) {
