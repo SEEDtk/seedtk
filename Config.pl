@@ -473,13 +473,13 @@ if ($vanillaMode) {
     chdir $projDir;
     system("make");
     chdir $oldDir;
-    # Now we need to fix the path if there is a custom JDK.
+    # Now we need to fix the path if there is a custom JDK. Note that the current JDK must be
+    # in a directory named "jdk". It should point to the latest version.
     opendir my $dh, $projDir || die "Could not open project subdirectories: $!";
-    my @java = grep { $_ =~ /^(?:jdk-|apache-maven-)/ && -d "$projDir/$_" } readdir $dh;
+    my @java = grep { $_ =~ /^(?:jdk|apache-maven-)/ && -d "$projDir/$_" } readdir $dh;
     if (@java) {
-        my ($javaVersion) = grep { $_ =~ /^jdk-/ } @java;
         my ($mvnVersion) = grep { $_ =~ /^apache-maven/ } @java;
-        my $jdkPath = "$projDir/$javaVersion";
+        my $jdkPath = "$projDir/jdk";
         my $mvnPath = "$projDir/$mvnVersion";
         my @lines;
         # Insure we have the java environment variables.
