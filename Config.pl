@@ -519,6 +519,9 @@ if ($vanillaMode) {
 }
 # Setup the java commands.
 SetupJava($jarDir, $projDir);
+# Setup the python commands.
+my $binDir = ($winMode ? $projDir : "$projDir/bin");
+SetupPython($binDir, $modBaseDir);
 # Set up the FLASK projects.
 SetupFlask($winMode, $modBaseDir, "$projDir/bin");
 # Setup the CLI commands.
@@ -735,7 +738,7 @@ sub WriteAllParams {
     print $oh "package FIG_Config;\n";
     Env::WriteLines($oh,
         "",
-        "## WHEN YOU ADD ITEMS TO THIS FILE, BE SURE TO UPDATE kernel/scripts/Config.pl.",
+        "## WHEN YOU ADD ITEMS TO THIS FILE, BE SURE TO UPDATE WriteAllParams in Config.pl.",
         "## All paths should be absolute, not relative.",
         "");
     # Write each parameter.
@@ -781,6 +784,8 @@ sub WriteAllParams {
             "our \@shared = qw(" . join(" ", @FIG_Config::shared) . ");",
             "", "# list of java modules",
             "our \@java = qw(" . join(" ", @FIG_Config::java) . ");",
+            "", "# map of python projects to conda environments",
+            "our %python_envs = (" . join(", ", map { "'$_' => \"" . $FIG_Config::python_envs{$_} . "\"" } keys %FIG_Config::python_envs) . ");",
             );
     # Set up the tool directories.
     my $packages = "$FIG_Config::proj/packages";
@@ -1295,6 +1300,60 @@ sub SetupJava {
     }
 }
 
+=head3 SetupPython
+
+    SetupPython($projDir, $opt);
+
+Create scripts for the Python projects that set the proper conda environment.
+
+=over 4
+
+=item binDir
+
+Output directory for generated commands.
+
+=item modBaseDir
+
+Base directory for module projects.
+
+=back
+
+=cut
+
+sub SetupPython {
+    my ($binDir, $modBaseDir) = @_;
+    # Process the python scripts.
+    for my $pythonDir (keys %FIG_Config::python_envs) {
+        my $envName = $FIG_Config::python_envs{$pythonDir};
+        my $scriptDir = "$modBaseDir/$pythonDir";
+        # We need to recursively search this directory for scripts.
+        my @dirStack = ($scriptDir);
+        while (my $dir = pop @dirStack) {
+            if (-d $dir) {
+                # Open the directory.
+                opendir(my $dh, $dir) || die "Could not open python script directory $dir: $!";
+                my @files = readdir($dh);
+                for my $file (@files) {
+                    # If this is a directory, we need to add it to the stack.
+                    if (-d "$dir/$file" && $file !~ /^\./) {
+                        push @dirStack, "$dir/$file";
+                    } elsif ($file =~ /\.(?:py)$/i) {
+                        # If this is a Python script, we need to set it up. We check for a shebang.
+                        open(my $ph, '<', "$dir/$file") || die "Could not open python script $file: $!";
+                        my $shebang = <$ph>;
+                        close $ph;
+                        if ($shebang =~ /^#!/) {
+                            SetupPythonScript($file, $binDir, $dir, $envName);
+                        }
+                    }
+                }
+                closedir $dh;
+            }
+        }
+    }
+
+}
+
 =head3 SetupCommands
 
     SetupCommands(\%modules, $opt);
@@ -1434,6 +1493,37 @@ sub SetupScript {
     # Denote we created this file.
     if ($wrappers) {
         $wrappers->{$binaryName} = 1;
+    }
+}
+
+sub SetupPythonScript {
+    my ($script, $binDir, $scriptDir, $envName, $wrappers) = @_;
+    # Get the unsuffixed script name.
+    my ($binaryName) = $script =~ /(.+)\.py/i;
+    # Compute the script name suffix.
+    my $suffix = ($winMode ? '.cmd' : '');
+    # Create the wrapper file.
+    my $fileName = "$binDir/$binaryName$suffix";
+    open(my $oh, ">$fileName") || die "Could not open $script: $!";
+    if (! $winMode) {
+        # For non-Windows, we need to set the shebang.
+        print $oh "#!/usr/bin/env bash\n";
+        print $oh "conda activate $envName\n";
+        print $oh "python $scriptDir/$script \"\$\@\"\n";
+    } else {
+        # For Windows, we need to turn off echoing.
+        print $oh "\@ECHO OFF\n";
+        print $oh "call conda activate $envName\n";
+        print $oh "python $scriptDir/$script %*\n";
+    }
+    close $oh;
+    # Turn on the execution bits.
+    my @finfo = stat $fileName;
+    my $newMode = ($finfo[2] & 0777) | 0111;
+    chmod $newMode, $fileName;
+    # Denote we created this file.
+    if ($wrappers) {
+        $wrappers->{$script} = 1;
     }
 }
 
