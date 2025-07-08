@@ -573,15 +573,13 @@ for my $javaDir (@FIG_Config::java) {
         # This is a maven project, so we need to pull the project and the sub-projects.
         print $oh "echo Pulling java directory $javaDir\n";
         print $oh "cd $realDir\n";
-        print $oh "git pull --ff-only\n";
+        print $oh "git pull --recurse-submodules\n";
         delete $pull{$javaDir};
+        # Now insure we don't re-pull the submodules.
         opendir(my $dh, $realDir) || die "Could not open $javaDir: $!";
         my @subs = grep { -s "$realDir/$_/pom.xml" && substr($_,0,1) ne '.' } readdir $dh;
         closedir $dh;
-        print $oh "echo Pulling $javaDir sub-projects.\n";
         for my $sub (@subs) {
-            print $oh "cd $realDir/$sub\n";
-            print $oh "git pull origin master\n";
             delete $pull{$sub};
         }
     }
@@ -807,7 +805,7 @@ sub WriteAllParams {
         GeneratePathFix($oh, $winMode, libraries => 'PERL5LIB', @libs, "$FIG_Config::proj/config");
     }
     if ($vanillaMode) {
-		if ($winMode) {
+    if ($winMode) {
             # On Windows, we need to upgrade the PATHEXT.
             Env::WriteLines($oh, "", "# Insure PERL is executable.",
                     "unless (\$ENV{PATHEXT} =~ /\.pl/i) {",
@@ -1337,7 +1335,7 @@ sub SetupPython {
                     # If this is a directory, we need to add it to the stack.
                     if (-d "$dir/$file" && $file !~ /^\./) {
                         push @dirStack, "$dir/$file";
-                    } elsif ($file =~ /\.(?:py)$/i) {
+                    } elsif ($file =~ /\.(?:py)$/i && $file !~ /^__/) {
                         # If this is a Python script, we need to set it up. We check for a shebang.
                         open(my $ph, '<', "$dir/$file") || die "Could not open python script $file: $!";
                         my $shebang = <$ph>;
