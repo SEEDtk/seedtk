@@ -86,6 +86,10 @@ The command-line options are as follows.
 
 =over 4
 
+=item noconda
+
+Skip the conda activation in the python scripts. This is necessary on some machines.
+
 =item fc
 
 If specified, the name of the B<FIG_Config> file for the output. If the name is specified
@@ -174,6 +178,7 @@ my ($opt, $usage) = describe_options('%o %c dataRootDirectory',
         ["kbase=s", "kbase lib directory"],
         ["eclipse:s", "if specified, then we will set up for Eclipse"],
         ["homeFix", "if specified, a root path of 'homes/' will be changed to '~' (Argonne kludge)"],
+        ["noconda", "if specified, do not activate conda in the python scripts"],
         ["java=s", "if specified, the root directory of the Eclipse workspace, from which java modules will be derived"]
         );
 print "Retrieving current configuration.\n";
@@ -186,6 +191,8 @@ if (defined $eclipseParm) {
         $eclipseParm = 'SEEDtk';
     }
 }
+# Save the conda option.
+my $noConda = $opt->noconda;
 # Get the directory this script is running in.
 my $base_dir = dirname(File::Spec->rel2abs(__FILE__));
 # Get into it.
@@ -1508,12 +1515,16 @@ sub SetupPythonScript {
     if (! $winMode) {
         # For non-Windows, we need to set the shebang.
         print $oh "#!/usr/bin/env bash\n";
-        print $oh "conda activate $envName\n";
+        if (! $noConda) {
+            print $oh "conda activate $envName\n";
+        }
         print $oh "python $scriptDir/$script \"\$\@\"\n";
     } else {
         # For Windows, we need to turn off echoing.
         print $oh "\@ECHO OFF\n";
-        print $oh "call conda activate $envName\n";
+        if (! $noConda) {
+            print $oh "call conda activate $envName\n";
+        }
         print $oh "python $scriptDir/$script %*\n";
     }
     close $oh;
