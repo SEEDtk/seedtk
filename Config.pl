@@ -514,6 +514,8 @@ if ($vanillaMode) {
                 $skip = 1;
             } elsif ($line =~ /^export MAVEN_HOME/) {
                 $skip = 1;
+            } elsif ($line =~ /^export CODE_BASE/) {
+                $skip = 1;
             }
             if (! $skip) {
                 push @lines, $line;
