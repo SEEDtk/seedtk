@@ -582,13 +582,16 @@ for my $javaDir (@FIG_Config::java) {
         # This is a maven project, so we need to pull the project and the sub-projects.
         print $oh "echo Pulling java directory $javaDir\n";
         print $oh "cd $realDir\n";
-        print $oh "git pull --recurse-submodules\n";
+        print $oh "git pull\n";
         delete $pull{$javaDir};
-        # Now insure we don't re-pull the submodules.
+        # Now pull the submodules and insure we don't re-pull them.
         opendir(my $dh, $realDir) || die "Could not open $javaDir: $!";
         my @subs = grep { -s "$realDir/$_/pom.xml" && substr($_,0,1) ne '.' } readdir $dh;
         closedir $dh;
         for my $sub (@subs) {
+            print $oh "echo Pulling submodule $sub\n";
+            print $oh "cd $realDir/$sub\n";
+            print $oh "git pull origin master --ff-only\n";
             delete $pull{$sub};
         }
     }
